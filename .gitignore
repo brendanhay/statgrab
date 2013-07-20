@@ -29,10 +29,3 @@ tags
 
 # OSX
 .DS_Store
-
-# Keiretsu
-.env
-Procfile
-
-# Protobufs
-Protocol*
