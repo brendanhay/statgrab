@@ -11,8 +11,7 @@ cabal-dev
 bin
 dist
 tmp
-.shelly
-vendor
+.vagrant
 
 # CTAGS
 TAGS
