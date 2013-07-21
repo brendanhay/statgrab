@@ -2,7 +2,7 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 
 -- |
--- Module      : System.Statgrab
+-- Module      : System.Statgrab.Base
 -- Copyright   : (c) 2013 Brendan Hay <brendan.g.hay@gmail.com>
 -- License     : This Source Code Form is subject to the terms of
 --               the Mozilla Public License, v. 2.0.
@@ -12,7 +12,7 @@
 -- Stability   : experimental
 -- Portability : non-portable (GHC extensions)
 
-module System.Statgrab where
+module System.Statgrab.Base where
 
 import Foreign
 import Foreign.C.Types
@@ -24,54 +24,63 @@ import Foreign.C.String
 -- Enums
 --
 
+newtype Error = Error { errorNumber :: CInt }
+    deriving (Eq, Show)
+
 #{enum Error, Error
   , errNone               = SG_ERROR_NONE
-  , errAsprintf           = SG_ERROR_ASPRINTF
+  , errAsPrintf           = SG_ERROR_ASPRINTF
   , errDevices            = SG_ERROR_DEVICES
-  , errDevstat_getdevs    = SG_ERROR_DEVSTAT_GETDEVS
+  , errDevStatGetDevs     = SG_ERROR_DEVSTAT_GETDEVS
   , errDevstat_selectdevs = SG_ERROR_DEVSTAT_SELECTDEVS
   , errDiskinfo           = SG_ERROR_DISKINFO
   , errEnoent             = SG_ERROR_ENOENT
   , errGetifaddrs         = SG_ERROR_GETIFADDRS
-  , errGetmountinfo       = SG_ERROR_GETMNTINFO
-  , errGetpagesize        = SG_ERROR_GETPAGESIZE
+  , errGetmountInfo       = SG_ERROR_GETMNTINFO
+  , errGetPageSize        = SG_ERROR_GETPAGESIZE
   , errHost               = SG_ERROR_HOST
-  , errKstat_data_lookup  = SG_ERROR_KSTAT_DATA_LOOKUP
-  , errKstat_lookup       = SG_ERROR_KSTAT_LOOKUP
-  , errKstat_open         = SG_ERROR_KSTAT_OPEN
-  , errKstat_read         = SG_ERROR_KSTAT_READ
-  , errKvm_getswapinfo    = SG_ERROR_KVM_GETSWAPINFO
-  , errKvm_openfiles      = SG_ERROR_KVM_OPENFILES
+  , errKstatDataLookup    = SG_ERROR_KSTAT_DATA_LOOKUP
+  , errKstatLookup        = SG_ERROR_KSTAT_LOOKUP
+  , errKstatOpen          = SG_ERROR_KSTAT_OPEN
+  , errKstatRead          = SG_ERROR_KSTAT_READ
+  , errKvmGetSwapInfo     = SG_ERROR_KVM_GETSWAPINFO
+  , errKvmOpenFiles       = SG_ERROR_KVM_OPENFILES
   , errMalloc             = SG_ERROR_MALLOC
-  , errMemstatus          = SG_ERROR_MEMSTATUS
+  , errMemStatus          = SG_ERROR_MEMSTATUS
   , errOpen               = SG_ERROR_OPEN
-  , errOpendir            = SG_ERROR_OPENDIR
+  , errOpenDir            = SG_ERROR_OPENDIR
   , errParse              = SG_ERROR_PARSE
-  , errPdhadd             = SG_ERROR_PDHADD
-  , errPdhcollect         = SG_ERROR_PDHCOLLECT
-  , errPdhopen            = SG_ERROR_PDHOPEN
-  , errPdhread            = SG_ERROR_PDHREAD
+  , errPdhAdd             = SG_ERROR_PDHADD
+  , errPdhCollect         = SG_ERROR_PDHCOLLECT
+  , errPdhOpen            = SG_ERROR_PDHOPEN
+  , errPdhRead            = SG_ERROR_PDHREAD
   , errPermission         = SG_ERROR_PERMISSION
-  , errPstat              = SG_ERROR_PSTAT
-  , errSetegid            = SG_ERROR_SETEGID
-  , errSeteuid            = SG_ERROR_SETEUID
-  , errSetmntent          = SG_ERROR_SETMNTENT
+  , errPStat              = SG_ERROR_PSTAT
+  , errSetEGid            = SG_ERROR_SETEGID
+  , errSetEUid            = SG_ERROR_SETEUID
+  , errSetMntent          = SG_ERROR_SETMNTENT
   , errSocket             = SG_ERROR_SOCKET
-  , errSwapctl            = SG_ERROR_SWAPCTL
-  , errSysconf            = SG_ERROR_SYSCONF
-  , errSysctl             = SG_ERROR_SYSCTL
-  , errSysctlByName       = SG_ERROR_SYSCTLBYNAME
+  , errSwapCtl            = SG_ERROR_SWAPCTL
+  , errSysConf            = SG_ERROR_SYSCONF
+  , errSysCtl             = SG_ERROR_SYSCTL
+  , errSysCtlByName       = SG_ERROR_SYSCTLBYNAME
   , errSysctlNameToMib    = SG_ERROR_SYSCTLNAMETOMIB
   , errUname              = SG_ERROR_UNAME
   , errUnsupported        = SG_ERROR_UNSUPPORTED
-  , errXswVerMismatch   = SG_ERROR_XSW_VER_MISMATCH
+  , errXswVerMismatch     = SG_ERROR_XSW_VER_MISMATCH
 }
+
+newtype Duplex = Duplex { duplex :: CInt }
+    deriving (Eq, Show)
 
 #{enum Duplex, Duplex
   , duplexFull    = SG_IFACE_DUPLEX_FULL
   , duplexHalf    = SG_IFACE_DUPLEX_HALF
   , duplexUnknown = SG_IFACE_DUPLEX_UNKNOWN
 }
+
+newtype ProcessState = ProcessState { processState :: CInt }
+    deriving (Eq, Show)
 
 #{enum ProcessState, ProcessState
   , stateRunning  = SG_PROCESS_STATE_RUNNING
@@ -198,10 +207,10 @@ data NetworkIOStats = NetworkIOStats
 instance Storable NetworkIOStats where
 
 data NetworkIFaceStats = NetworkIFaceStats
-    { ifaceName   :: {-# UNPACK #-} !CString
-    , ifaceSpeed  :: {-# UNPACK #-} !CInt
-    , ifaceDuplex :: {-# UNPACK #-} !Duplex
-    , ifaceUp     :: {-# UNPACK #-} !CInt
+    { ifaceStatsName :: {-# UNPACK #-} !CString
+    , ifaceSpeed     :: {-# UNPACK #-} !CInt
+    , ifaceDuplex    :: {-# UNPACK #-} !Duplex
+    , ifaceUp        :: {-# UNPACK #-} !CInt
     }
 
 instance Storable NetworkIFaceStats where

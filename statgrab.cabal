@@ -28,9 +28,7 @@ library
 
     exposed-modules:
         System.Statgrab
-
-    other-modules:
-        Paths_statgrab
+      , System.Statgrab.Base
 
     ghc-options:
         -Wall
