@@ -97,6 +97,8 @@ newtype ProcessState = ProcessState { processState :: CInt }
 -- Structs
 --
 
+#let alignment t = "%lu", (unsigned long)offsetof(struct {char x__; t (y__); }, y__)
+
 data HostInfo = HostInfo
     { infoOsName    :: {-# UNPACK #-} !CString
     , infoOsRelease :: {-# UNPACK #-} !CString
@@ -343,13 +345,13 @@ instance Storable DiskIOStats where
     alignment _ = #{alignment sg_disk_io_stats}
     sizeOf    _ = #{size      sg_disk_io_stats}
 
-    peek p = Disk_ioStats
+    peek p = DiskIOStats
         <$> #{peek sg_disk_io_stats, disk_name} p
         <*> #{peek sg_disk_io_stats, read_bytes} p
         <*> #{peek sg_disk_io_stats, write_bytes} p
         <*> #{peek sg_disk_io_stats, systime} p
 
-    poke p Disk_ioStats{..} = do
+    poke p DiskIOStats{..} = do
         #{poke sg_disk_io_stats, disk_name} p
         #{poke sg_disk_io_stats, read_bytes} p
         #{poke sg_disk_io_stats, write_bytes} p
@@ -371,7 +373,7 @@ instance Storable NetworkIOStats where
     alignment _ = #{alignment sg_network_io_stats}
     sizeOf    _ = #{size      sg_network_io_stats}
 
-    peek p = Network_ioStats
+    peek p = NetworkIOStats
         <$> #{peek sg_network_io_stats, interface_name} p
         <*> #{peek sg_network_io_stats, tx} p
         <*> #{peek sg_network_io_stats, rx} p
@@ -382,7 +384,7 @@ instance Storable NetworkIOStats where
         <*> #{peek sg_network_io_stats, collisions} p
         <*> #{peek sg_network_io_stats, systime} p
 
-    poke p Network_ioStats{..} = do
+    poke p NetworkIOStats{..} = do
         #{poke sg_network_io_stats, interface_name} p
         #{poke sg_network_io_stats, tx} p
         #{poke sg_network_io_stats, rx} p
@@ -515,10 +517,6 @@ instance Storable ProcessCount where
         #{poke sg_process_count, sleeping} p
         #{poke sg_process_count, stopped} p
         #{poke sg_process_count, zombie} p
-
---
--- Pointers
---
 
 --
 -- Foreign Calls

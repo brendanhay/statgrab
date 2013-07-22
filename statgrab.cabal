@@ -27,10 +27,8 @@ library
     hs-source-dirs:    src
 
     exposed-modules:
---        System.Statgrab
---      , System.Statgrab.Base
-        System.Statgrab.TH
-      , System.Statgrab.Test
+        System.Statgrab
+      , System.Statgrab.Base
 
     ghc-options:
         -Wall
