@@ -27,17 +27,21 @@ library
     hs-source-dirs:    src
 
     exposed-modules:
-        System.Statgrab
-      , System.Statgrab.Base
+--        System.Statgrab
+--      , System.Statgrab.Base
+        System.Statgrab.TH
+      , System.Statgrab.Test
 
     ghc-options:
         -Wall
         -rtsopts
         -fwarn-tabs
         -funbox-strict-fields
+        -ddump-splices
 
     build-depends:
-        base >= 4 && < 5
+        base             >= 4 && < 5
+      , template-haskell
 
     extra-libraries:
         statgrab

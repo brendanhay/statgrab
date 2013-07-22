@@ -1,5 +1,7 @@
 {-# LANGUAGE CPP                      #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE RecordWildCards          #-}
+{-# LANGUAGE TemplateHaskell          #-}
 
 -- |
 -- Module      : System.Statgrab.Base
@@ -14,6 +16,7 @@
 
 module System.Statgrab.Base where
 
+import Control.Applicative
 import Foreign
 import Foreign.C.Types
 import Foreign.C.String
@@ -25,7 +28,7 @@ import Foreign.C.String
 --
 
 newtype Error = Error { errorNumber :: CInt }
-    deriving (Eq, Show)
+    deriving (Eq, Ord)
 
 #{enum Error, Error
   , errNone               = SG_ERROR_NONE
@@ -71,7 +74,7 @@ newtype Error = Error { errorNumber :: CInt }
 }
 
 newtype Duplex = Duplex { duplex :: CInt }
-    deriving (Eq, Show)
+    deriving (Eq, Ord)
 
 #{enum Duplex, Duplex
   , duplexFull    = SG_IFACE_DUPLEX_FULL
@@ -80,7 +83,7 @@ newtype Duplex = Duplex { duplex :: CInt }
 }
 
 newtype ProcessState = ProcessState { processState :: CInt }
-    deriving (Eq, Show)
+    deriving (Eq, Ord)
 
 #{enum ProcessState, ProcessState
   , stateRunning  = SG_PROCESS_STATE_RUNNING
@@ -104,6 +107,24 @@ data HostInfo = HostInfo
     }
 
 instance Storable HostInfo where
+    alignment _ = #{alignment sg_host_info}
+    sizeOf    _ = #{size      sg_host_info}
+
+    peek p = HostInfo
+        <$> #{peek sg_host_info, os_name} p
+        <*> #{peek sg_host_info, os_release} p
+        <*> #{peek sg_host_info, os_version} p
+        <*> #{peek sg_host_info, platform} p
+        <*> #{peek sg_host_info, hostname} p
+        <*> #{peek sg_host_info, uptime} p
+
+    poke p HostInfo{..} = do
+        #{poke sg_host_info, os_name} p infoOsName
+        #{poke sg_host_info, os_release} p infoOsRelease
+        #{poke sg_host_info, os_version} p infoOsVersion
+        #{poke sg_host_info, platform} p infoPlatform
+        #{poke sg_host_info, hostname} p infoHostname
+        #{poke sg_host_info, uptime} p infoUptime
 
 data CpuStats = CpuStats
     { cpuUser    :: {-# UNPACK #-} !CLLong
@@ -117,6 +138,28 @@ data CpuStats = CpuStats
     }
 
 instance Storable CpuStats where
+    alignment _ = #{alignment sg_cpu_stats}
+    sizeOf    _ = #{size      sg_cpu_stats}
+
+    peek p = CpuStats
+        <$> #{peek sg_cpu_stats, user} p
+        <*> #{peek sg_cpu_stats, kernel} p
+        <*> #{peek sg_cpu_stats, idle} p
+        <*> #{peek sg_cpu_stats, iowait} p
+        <*> #{peek sg_cpu_stats, swap} p
+        <*> #{peek sg_cpu_stats, nice} p
+        <*> #{peek sg_cpu_stats, total} p
+        <*> #{peek sg_cpu_stats, systime} p
+
+    poke p CpuStats{..} = do
+        #{peek sg_cpu_stats, user} p
+        #{peek sg_cpu_stats, kernel} p
+        #{peek sg_cpu_stats, idle} p
+        #{peek sg_cpu_stats, iowait} p
+        #{peek sg_cpu_stats, swap} p
+        #{peek sg_cpu_stats, nice} p
+        #{peek sg_cpu_stats, total} p
+        #{peek sg_cpu_stats, systime} p
 
 data CpuPercents = CpuPercents
     { cpuPctUser      :: {-# UNPACK #-} !CFloat
@@ -129,6 +172,26 @@ data CpuPercents = CpuPercents
     }
 
 instance Storable CpuPercents where
+    alignment _ = #{alignment sg_cpu_percents}
+    sizeOf    _ = #{size      sg_cpu_percents}
+
+    peek p = CpuPercents
+        <$> #{peek sg_cpu_percents, user} p
+        <*> #{peek sg_cpu_percents, kernel} p
+        <*> #{peek sg_cpu_percents, idle} p
+        <*> #{peek sg_cpu_percents, iowait} p
+        <*> #{peek sg_cpu_percents, swap} p
+        <*> #{peek sg_cpu_percents, nice} p
+        <*> #{peek sg_cpu_percents, time_taken} p
+
+    poke p CpuPercents{..} = do
+        #{peek sg_cpu_percents, user} p
+        #{peek sg_cpu_percents, kernel} p
+        #{peek sg_cpu_percents, idle} p
+        #{peek sg_cpu_percents, iowait} p
+        #{peek sg_cpu_percents, swap} p
+        #{peek sg_cpu_percents, nice} p
+        #{peek sg_cpu_percents, time_taken} p
 
 data MemStats = MemStats
     { memTotal :: {-# UNPACK #-} !CLLong
@@ -138,6 +201,20 @@ data MemStats = MemStats
     }
 
 instance Storable MemStats where
+    alignment _ = #{alignment sg_mem_stats}
+    sizeOf    _ = #{size      sg_mem_stats}
+
+    peek p = MemStats
+        <$> #{peek sg_mem_stats, total} p
+        <*> #{peek sg_mem_stats, free} p
+        <*> #{peek sg_mem_stats, used} p
+        <*> #{peek sg_mem_stats, cache} p
+
+    poke p MemStats{..} = do
+        #{peek sg_mem_stats, total} p
+        #{peek sg_mem_stats, free} p
+        #{peek sg_mem_stats, used} p
+        #{peek sg_mem_stats, cache} p
 
 data LoadStats = LoadStats
     { load1  :: {-# UNPACK #-} !CDouble
@@ -146,6 +223,18 @@ data LoadStats = LoadStats
     }
 
 instance Storable LoadStats where
+    alignment _ = #{alignment sg_load_stats}
+    sizeOf    _ = #{size      sg_load_stats}
+
+    peek p = LoadStats
+        <$> #{peek sg_load_stats, min1} p
+        <*> #{peek sg_load_stats, min5} p
+        <*> #{peek sg_load_stats, min15} p
+
+    poke p LoadStats{..} = do
+        #{peek sg_load_stats, min1} p
+        #{peek sg_load_stats, min5} p
+        #{peek sg_load_stats, min15} p
 
 data UserStats = UserStats
     { userNameList   :: {-# UNPACK #-} !CString
@@ -153,6 +242,16 @@ data UserStats = UserStats
     }
 
 instance Storable UserStats where
+    alignment _ = #{alignment sg_user_stats}
+    sizeOf    _ = #{size      sg_user_stats}
+
+    peek p = UserStats
+        <$> #{peek sg_user_stats, name_list} p
+        <*> #{peek sg_user_stats, num_entries} p
+
+    poke p UserStats{..} = do
+        #{peek sg_user_stats, name_list} p
+        #{peek sg_user_stats, num_entries} p
 
 data SwapStats = SwapStats
     { swapTotal :: {-# UNPACK #-} !CLLong
@@ -225,9 +324,9 @@ instance Storable PageStats where
 
 data ProcessStats = ProcessStats
     { procName       :: {-# UNPACK #-} !CString
-    , procTitle      :: {-# UNPACK #-} !Cstring
+    , procTitle      :: {-# UNPACK #-} !CString
     , procPid        :: {-# UNPACK #-} !CInt
-    , procParent     :: {-# UNPACK #-} !Cint
+    , procParent     :: {-# UNPACK #-} !CInt
     , procPGid       :: {-# UNPACK #-} !CInt
     , procUid        :: {-# UNPACK #-} !CUInt
     , procEUid       :: {-# UNPACK #-} !CUInt
@@ -251,62 +350,96 @@ data ProcessCount = ProcessCount
     , procZombie   :: {-# UNPACK #-} !CInt
     }
 
-instance Storable ProcessStats where
+instance Storable ProcessCount where
+
+--
+-- Pointers
+--
 
 --
 -- Foreign Calls
 --
 
 foreign import ccall safe "statgrab.h sg_get_host_info"
-    sg_get_host_info :: IO HostInfo
+    sg_init :: IO CInt
+
+foreign import ccall safe "statgrab.h sg_get_host_info"
+    sg_snapshot :: IO CInt
+
+foreign import ccall safe "statgrab.h sg_get_host_info"
+    sg_shutdown :: IO CInt
+
+foreign import ccall safe "statgrab.h sg_get_host_info"
+    sg_drop_privileges :: IO CInt
+
+foreign import ccall safe "statgrab.h sg_get_host_info"
+    sg_set_error :: Error -> CChar -> IO ()
+
+foreign import ccall safe "statgrab.h sg_get_host_info"
+    sg_set_error_with_errno :: Error -> CChar -> IO ()
+
+foreign import ccall safe "statgrab.h sg_get_host_info"
+    sg_get_error :: IO Error
+
+foreign import ccall safe "statgrab.h sg_get_host_info"
+    sg_get_error_arg :: IO CChar
+
+foreign import ccall safe "statgrab.h sg_get_host_info"
+    sg_get_error_errno :: IO CInt
+
+foreign import ccall safe "statgrab.h sg_get_host_info"
+    sg_str_error :: Error -> IO CChar
+
+foreign import ccall safe "statgrab.h sg_get_host_info"
+    sg_get_host_info :: IO (Ptr HostInfo)
 
 foreign import ccall safe "statgrab.h sg_get_cpu_stats"
-    sg_get_cpu_stats :: IO CpuStats
+    sg_get_cpu_stats :: IO (Ptr CpuStats)
 
 foreign import ccall safe "statgrab.h sg_get_cpu_stats_diff"
-    sg_get_cpu_stats_diff :: IO CpuStats
+    sg_get_cpu_stats_diff :: IO (Ptr CpuStats)
 
 foreign import ccall safe "statgrab.h sg_get_cpu_percents"
-    sg_get_cpu_stats_percents :: IO CpuPercents
+    sg_get_cpu_stats_percents :: IO (Ptr CpuPercents)
 
 foreign import ccall safe "statgrab.h sg_get_mem_stats"
-    sg_get_mem_stats :: IO MemStats
+    sg_get_mem_stats :: IO (Ptr MemStats)
 
 foreign import ccall safe "statgrab.h sg_get_load_stats"
-    sg_get_load_stats :: IO LoadStats
+    sg_get_load_stats :: IO (Ptr LoadStats)
 
 foreign import ccall safe "statgrab.h sg_get_user_stats"
-    sg_get_user_stats :: IO UserStats
+    sg_get_user_stats :: IO (Ptr UserStats)
 
 foreign import ccall safe "statgrab.h sg_get_disk_io_stats"
-    sg_get_swap_stats :: IO SwapStats
+    sg_get_swap_stats :: IO (Ptr SwapStats)
 
 foreign import ccall safe "statgrab.h sg_get_fs_stats"
-    sg_get_fs_stats :: CInt -> IO FsStats
+    sg_get_fs_stats :: CInt -> IO (Ptr FsStats)
 
 foreign import ccall safe "statgrab.h sg_get_disk_io_stats"
-    sg_get_disk_io_stats :: CInt -> IO DiskIOStats
+    sg_get_disk_io_stats :: CInt -> IO (Ptr DiskIOStats)
 
 foreign import ccall safe "statgrab.h sg_get_disk_io_stats_diff"
-    sg_get_disk_io_stats_diff :: CInt -> IO DiskIOStats
+    sg_get_disk_io_stats_diff :: CInt -> IO (Ptr DiskIOStats)
 
 foreign import ccall safe "statgrab.h sg_get_network_io_stats"
-    sg_get_network_io_stats :: CInt -> IO NetworkIOStats
+    sg_get_network_io_stats :: CInt -> IO (Ptr NetworkIOStats)
 
 foreign import ccall safe "statgrab.h sg_get_network_io_stats_diff"
-    sg_get_network_io_stats_diff :: CInt -> IO NetworkIOStats
+    sg_get_network_io_stats_diff :: CInt -> IO (Ptr NetworkIOStats)
 
 foreign import ccall safe "statgrab.h sg_get_network_iface_stats"
-    sg_get_network_iface_stats :: CInt -> IO NetworkIFaceStats
+    sg_get_network_iface_stats :: CInt -> IO (Ptr NetworkIFaceStats)
 
 foreign import ccall safe "statgrab.h sg_get_page_stats"
-    sg_get_page_stats :: IO PageStats
+    sg_get_page_stats :: IO (Ptr PageStats)
 
 foreign import ccall safe "statgrab.h sg_get_page_stats_diff"
-    sg_get_page_stats_diff :: IO PageStats
+    sg_get_page_stats_diff :: IO (Ptr PageStats)
 
 foreign import ccall safe "statgrab.h sg_get_process_stats"
-    sg_get_process_stats :: CInt -> IO ProcessStats
+    sg_get_process_stats :: CInt -> IO (Ptr ProcessStats)
 
 foreign import ccall safe "statgrab.h sg_get_process_count"
-    sg_get_process_count :: IO ProcessCount
+    sg_get_process_count :: IO (Ptr ProcessCount)
