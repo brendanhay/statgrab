@@ -152,14 +152,14 @@ instance Storable CpuStats where
         <*> #{peek sg_cpu_stats, systime} p
 
     poke p CpuStats{..} = do
-        #{peek sg_cpu_stats, user} p
-        #{peek sg_cpu_stats, kernel} p
-        #{peek sg_cpu_stats, idle} p
-        #{peek sg_cpu_stats, iowait} p
-        #{peek sg_cpu_stats, swap} p
-        #{peek sg_cpu_stats, nice} p
-        #{peek sg_cpu_stats, total} p
-        #{peek sg_cpu_stats, systime} p
+        #{poke sg_cpu_stats, user} p
+        #{poke sg_cpu_stats, kernel} p
+        #{poke sg_cpu_stats, idle} p
+        #{poke sg_cpu_stats, iowait} p
+        #{poke sg_cpu_stats, swap} p
+        #{poke sg_cpu_stats, nice} p
+        #{poke sg_cpu_stats, total} p
+        #{poke sg_cpu_stats, systime} p
 
 data CpuPercents = CpuPercents
     { cpuPctUser      :: {-# UNPACK #-} !CFloat
@@ -185,13 +185,13 @@ instance Storable CpuPercents where
         <*> #{peek sg_cpu_percents, time_taken} p
 
     poke p CpuPercents{..} = do
-        #{peek sg_cpu_percents, user} p
-        #{peek sg_cpu_percents, kernel} p
-        #{peek sg_cpu_percents, idle} p
-        #{peek sg_cpu_percents, iowait} p
-        #{peek sg_cpu_percents, swap} p
-        #{peek sg_cpu_percents, nice} p
-        #{peek sg_cpu_percents, time_taken} p
+        #{poke sg_cpu_percents, user} p
+        #{poke sg_cpu_percents, kernel} p
+        #{poke sg_cpu_percents, idle} p
+        #{poke sg_cpu_percents, iowait} p
+        #{poke sg_cpu_percents, swap} p
+        #{poke sg_cpu_percents, nice} p
+        #{poke sg_cpu_percents, time_taken} p
 
 data MemStats = MemStats
     { memTotal :: {-# UNPACK #-} !CLLong
@@ -211,10 +211,10 @@ instance Storable MemStats where
         <*> #{peek sg_mem_stats, cache} p
 
     poke p MemStats{..} = do
-        #{peek sg_mem_stats, total} p
-        #{peek sg_mem_stats, free} p
-        #{peek sg_mem_stats, used} p
-        #{peek sg_mem_stats, cache} p
+        #{poke sg_mem_stats, total} p
+        #{poke sg_mem_stats, free} p
+        #{poke sg_mem_stats, used} p
+        #{poke sg_mem_stats, cache} p
 
 data LoadStats = LoadStats
     { load1  :: {-# UNPACK #-} !CDouble
@@ -232,9 +232,9 @@ instance Storable LoadStats where
         <*> #{peek sg_load_stats, min15} p
 
     poke p LoadStats{..} = do
-        #{peek sg_load_stats, min1} p
-        #{peek sg_load_stats, min5} p
-        #{peek sg_load_stats, min15} p
+        #{poke sg_load_stats, min1} p
+        #{poke sg_load_stats, min5} p
+        #{poke sg_load_stats, min15} p
 
 data UserStats = UserStats
     { userNameList   :: {-# UNPACK #-} !CString
@@ -250,8 +250,8 @@ instance Storable UserStats where
         <*> #{peek sg_user_stats, num_entries} p
 
     poke p UserStats{..} = do
-        #{peek sg_user_stats, name_list} p
-        #{peek sg_user_stats, num_entries} p
+        #{poke sg_user_stats, name_list} p
+        #{poke sg_user_stats, num_entries} p
 
 data SwapStats = SwapStats
     { swapTotal :: {-# UNPACK #-} !CLLong
@@ -260,6 +260,18 @@ data SwapStats = SwapStats
     }
 
 instance Storable SwapStats where
+    alignment _ = #{alignment sg_swap_stats}
+    sizeOf    _ = #{size      sg_swap_stats}
+
+    peek p = SwapStats
+        <$> #{peek sg_swap_stats, total} p
+        <*> #{peek sg_swap_stats, used} p
+        <*> #{peek sg_swap_stats, free} p
+
+    poke p SwapStats{..} = do
+        #{poke sg_swap_stats, total} p
+        #{poke sg_swap_stats, used} p
+        #{poke sg_swap_stats, free} p
 
 data FsStats = FsStats
     { fsDeviceName  :: {-# UNPACK #-} !CString
@@ -281,6 +293,44 @@ data FsStats = FsStats
     }
 
 instance Storable FsStats where
+    alignment _ = #{alignment sg_fs_stats}
+    sizeOf    _ = #{size      sg_fs_stats}
+
+    peek p = FsStats
+        <$> #{peek sg_fs_stats, device_name} p
+        <*> #{peek sg_fs_stats, fs_type} p
+        <*> #{peek sg_fs_stats, mnt_point} p
+        <*> #{peek sg_fs_stats, size} p
+        <*> #{peek sg_fs_stats, used} p
+        <*> #{peek sg_fs_stats, avail} p
+        <*> #{peek sg_fs_stats, total_inodes} p
+        <*> #{peek sg_fs_stats, used_inodes} p
+        <*> #{peek sg_fs_stats, free_inodes} p
+        <*> #{peek sg_fs_stats, avail_inodes} p
+        <*> #{peek sg_fs_stats, io_size} p
+        <*> #{peek sg_fs_stats, block_size} p
+        <*> #{peek sg_fs_stats, total_blocks} p
+        <*> #{peek sg_fs_stats, free_blocks} p
+        <*> #{peek sg_fs_stats, used_blocks} p
+        <*> #{peek sg_fs_stats, avail_blocks} p
+
+    poke p FsStats{..} = do
+        #{poke sg_fs_stats, device_name} p
+        #{poke sg_fs_stats, fs_type} p
+        #{poke sg_fs_stats, mnt_point} p
+        #{poke sg_fs_stats, size} p
+        #{poke sg_fs_stats, used} p
+        #{poke sg_fs_stats, avail} p
+        #{poke sg_fs_stats, total_inodes} p
+        #{poke sg_fs_stats, used_inodes} p
+        #{poke sg_fs_stats, free_inodes} p
+        #{poke sg_fs_stats, avail_inodes} p
+        #{poke sg_fs_stats, io_size} p
+        #{poke sg_fs_stats, block_size} p
+        #{poke sg_fs_stats, total_blocks} p
+        #{poke sg_fs_stats, free_blocks} p
+        #{poke sg_fs_stats, used_blocks} p
+        #{poke sg_fs_stats, avail_blocks} p
 
 data DiskIOStats = DiskIOStats
     { diskName       :: {-# UNPACK #-} !CString
@@ -290,6 +340,20 @@ data DiskIOStats = DiskIOStats
     }
 
 instance Storable DiskIOStats where
+    alignment _ = #{alignment sg_disk_io_stats}
+    sizeOf    _ = #{size      sg_disk_io_stats}
+
+    peek p = Disk_ioStats
+        <$> #{peek sg_disk_io_stats, disk_name} p
+        <*> #{peek sg_disk_io_stats, read_bytes} p
+        <*> #{peek sg_disk_io_stats, write_bytes} p
+        <*> #{peek sg_disk_io_stats, systime} p
+
+    poke p Disk_ioStats{..} = do
+        #{poke sg_disk_io_stats, disk_name} p
+        #{poke sg_disk_io_stats, read_bytes} p
+        #{poke sg_disk_io_stats, write_bytes} p
+        #{poke sg_disk_io_stats, systime} p
 
 data NetworkIOStats = NetworkIOStats
     { ifaceName       :: {-# UNPACK #-} !CString
@@ -304,6 +368,30 @@ data NetworkIOStats = NetworkIOStats
     }
 
 instance Storable NetworkIOStats where
+    alignment _ = #{alignment sg_network_io_stats}
+    sizeOf    _ = #{size      sg_network_io_stats}
+
+    peek p = Network_ioStats
+        <$> #{peek sg_network_io_stats, interface_name} p
+        <*> #{peek sg_network_io_stats, tx} p
+        <*> #{peek sg_network_io_stats, rx} p
+        <*> #{peek sg_network_io_stats, ipackets} p
+        <*> #{peek sg_network_io_stats, opackets} p
+        <*> #{peek sg_network_io_stats, ierrors} p
+        <*> #{peek sg_network_io_stats, oerrors} p
+        <*> #{peek sg_network_io_stats, collisions} p
+        <*> #{peek sg_network_io_stats, systime} p
+
+    poke p Network_ioStats{..} = do
+        #{poke sg_network_io_stats, interface_name} p
+        #{poke sg_network_io_stats, tx} p
+        #{poke sg_network_io_stats, rx} p
+        #{poke sg_network_io_stats, ipackets} p
+        #{poke sg_network_io_stats, opackets} p
+        #{poke sg_network_io_stats, ierrors} p
+        #{poke sg_network_io_stats, oerrors} p
+        #{poke sg_network_io_stats, collisions} p
+        #{poke sg_network_io_stats, systime} p
 
 data NetworkIFaceStats = NetworkIFaceStats
     { ifaceStatsName :: {-# UNPACK #-} !CString
@@ -313,6 +401,18 @@ data NetworkIFaceStats = NetworkIFaceStats
     }
 
 instance Storable NetworkIFaceStats where
+    alignment _ = #{alignment sg_network_iface_stats}
+    sizeOf    _ = #{size      sg_network_iface_stats}
+
+    peek p = NetworkIFaceStats
+        <$> #{peek sg_network_iface_stats, interface_name} p
+        <*> #{peek sg_network_iface_stats, speed} p
+        <*> #{peek sg_network_iface_stats, duplex} p
+
+    poke p NetworkIFaceStats{..} = do
+        #{poke sg_network_iface_stats, interface_name} p
+        #{poke sg_network_iface_stats, speed} p
+        #{poke sg_network_iface_stats, duplex} p
 
 data PageStats = PageStats
     { pagesIn  :: {-# UNPACK #-} !CLLong
@@ -321,6 +421,18 @@ data PageStats = PageStats
     }
 
 instance Storable PageStats where
+    alignment _ = #{alignment sg_page_stats}
+    sizeOf    _ = #{size      sg_page_stats}
+
+    peek p = PageStats
+        <$> #{peek sg_page_stats, pages_pagein} p
+        <*> #{peek sg_page_stats, pages_pageout} p
+        <*> #{peek sg_page_stats, systime} p
+
+    poke p PageStats{..} = do
+        #{poke sg_page_stats, pages_pagein} p
+        #{poke sg_page_stats, pages_pageout} p
+        #{poke sg_page_stats, systime} p
 
 data ProcessStats = ProcessStats
     { procName       :: {-# UNPACK #-} !CString
@@ -341,6 +453,42 @@ data ProcessStats = ProcessStats
     }
 
 instance Storable ProcessStats where
+    alignment _ = #{alignment sg_process_stats}
+    sizeOf    _ = #{size      sg_process_stats}
+
+    peek p = ProcessStats
+        <$> #{peek sg_process_stats, process_name} p
+        <*> #{peek sg_process_stats, proctitle} p
+        <*> #{peek sg_process_stats, pid} p
+        <*> #{peek sg_process_stats, parent} p
+        <*> #{peek sg_process_stats, pgid} p
+        <*> #{peek sg_process_stats, uid} p
+        <*> #{peek sg_process_stats, euid} p
+        <*> #{peek sg_process_stats, gid} p
+        <*> #{peek sg_process_stats, egid} p
+        <*> #{peek sg_process_stats, proc_size} p
+        <*> #{peek sg_process_stats, proc_resident} p
+        <*> #{peek sg_process_stats, time_spent} p
+        <*> #{peek sg_process_stats, cpu_percent} p
+        <*> #{peek sg_process_stats, nice} p
+        <*> #{peek sg_process_stats, state} p
+
+    poke p ProcessStats{..} = do
+        #{poke sg_process_stats, process_name} p
+        #{poke sg_process_stats, proctitle} p
+        #{poke sg_process_stats, pid} p
+        #{poke sg_process_stats, parent} p
+        #{poke sg_process_stats, pgid} p
+        #{poke sg_process_stats, uid} p
+        #{poke sg_process_stats, euid} p
+        #{poke sg_process_stats, gid} p
+        #{poke sg_process_stats, egid} p
+        #{poke sg_process_stats, proc_size} p
+        #{poke sg_process_stats, proc_resident} p
+        #{poke sg_process_stats, time_spent} p
+        #{poke sg_process_stats, cpu_percent} p
+        #{poke sg_process_stats, nice} p
+        #{poke sg_process_stats, state} p
 
 data ProcessCount = ProcessCount
     { procTotal    :: {-# UNPACK #-} !CInt
@@ -351,6 +499,22 @@ data ProcessCount = ProcessCount
     }
 
 instance Storable ProcessCount where
+    alignment _ = #{alignment sg_process_count}
+    sizeOf    _ = #{size      sg_process_count}
+
+    peek p = ProcessCount
+        <$> #{peek sg_process_count, total} p
+        <*> #{peek sg_process_count, running} p
+        <*> #{peek sg_process_count, sleeping} p
+        <*> #{peek sg_process_count, stopped} p
+        <*> #{peek sg_process_count, zombie} p
+
+    poke p ProcessCount{..} = do
+        #{poke sg_process_count, total} p
+        #{poke sg_process_count, running} p
+        #{poke sg_process_count, sleeping} p
+        #{poke sg_process_count, stopped} p
+        #{poke sg_process_count, zombie} p
 
 --
 -- Pointers
