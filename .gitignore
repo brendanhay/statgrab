@@ -5,13 +5,15 @@
 *.chi
 *.chs.h
 *.imports
+cabal.sandbox.config
 
 # Dirs
-cabal-dev
+.cabal-sandbox
 bin
 dist
 tmp
-.vagrant
+vendor
+metadata
 
 # CTAGS
 TAGS
@@ -28,3 +30,6 @@ tags
 
 # OSX
 .DS_Store
+
+# Vagrant
+.vagrant

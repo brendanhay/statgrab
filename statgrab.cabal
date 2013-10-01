@@ -1,6 +1,6 @@
 name:                  statgrab
 version:               0.1.0
-synopsis:              Pending
+synopsis:              Bindings to libstatgrab
 homepage:              http://github.com/brendanhay/statgrab
 license:               OtherLicense
 license-file:          LICENSE
@@ -38,8 +38,10 @@ library
         -ddump-splices
 
     build-depends:
-        base             >= 4 && < 5
-      , template-haskell
+        async
+      , base                      >= 4 && < 5
+      , MonadCatchIO-transformers
+      , transformers
 
     extra-libraries:
         statgrab
