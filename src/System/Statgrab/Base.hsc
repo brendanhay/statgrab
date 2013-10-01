@@ -587,7 +587,7 @@ foreign import ccall safe "statgrab.h sg_disk_io_compare_traffic"
     sg_disk_io_compare_traffic :: Ptr () -> Ptr () -> IO CInt
 
 data NetworkIOStats = NetworkIOStats
-    { ifaceName       :: {-# UNPACK #-} !CString
+    { ifaceIOName     :: {-# UNPACK #-} !CString
     , ifaceTX         :: {-# UNPACK #-} !CULLong
     , ifaceRX         :: {-# UNPACK #-} !CULLong
     , ifaceIPackets   :: {-# UNPACK #-} !CULLong
@@ -614,7 +614,7 @@ instance Storable NetworkIOStats where
         <*> #{peek sg_network_io_stats, systime} p
 
     poke p NetworkIOStats{..} = do
-        #{poke sg_network_io_stats, interface_name} p ifaceName
+        #{poke sg_network_io_stats, interface_name} p ifaceIOName
         #{poke sg_network_io_stats, tx} p ifaceTX
         #{poke sg_network_io_stats, rx} p ifaceRX
         #{poke sg_network_io_stats, ipackets} p ifaceIPackets
@@ -800,7 +800,7 @@ instance Storable ProcessStats where
         #{poke sg_process_stats, egid} p procEGid
         #{poke sg_process_stats, proc_size} p procSize
         #{poke sg_process_stats, proc_resident} p procResident
-        #{poke sg_process_stats, time_spent} p procTimeSpent
+        #{poke sg_process_stats, time_spent} p procSpent
         #{poke sg_process_stats, cpu_percent} p procCpuPercent
         #{poke sg_process_stats, nice} p procNice
         #{poke sg_process_stats, state} p procState
@@ -844,13 +844,13 @@ newtype Source = Source { unSource :: CInt }
 }
 
 data ProcessCount = ProcessCount
-    { procTotal    :: {-# UNPACK #-} !CULLong
-    , procRunning  :: {-# UNPACK #-} !CULLong
-    , procSleeping :: {-# UNPACK #-} !CULLong
-    , procStopped  :: {-# UNPACK #-} !CULLong
-    , procZombie   :: {-# UNPACK #-} !CULLong
-    , procUnknown  :: {-# UNPACK #-} !CULLong
-    , procSystime  :: {-# UNPACK #-} !CTime
+    { countTotal    :: {-# UNPACK #-} !CULLong
+    , countRunning  :: {-# UNPACK #-} !CULLong
+    , countSleeping :: {-# UNPACK #-} !CULLong
+    , countStopped  :: {-# UNPACK #-} !CULLong
+    , countZombie   :: {-# UNPACK #-} !CULLong
+    , countUnknown  :: {-# UNPACK #-} !CULLong
+    , countSystime  :: {-# UNPACK #-} !CTime
     }
 
 instance Storable ProcessCount where
@@ -865,11 +865,11 @@ instance Storable ProcessCount where
         <*> #{peek sg_process_count, zombie} p
 
     poke p ProcessCount{..} = do
-        #{poke sg_process_count, total} p procTotal
-        #{poke sg_process_count, running} p procRunning
-        #{poke sg_process_count, sleeping} p procSleeping
-        #{poke sg_process_count, stopped} p procStopped
-        #{poke sg_process_count, zombie} p procZombie
+        #{poke sg_process_count, total} p countTotal
+        #{poke sg_process_count, running} p countRunning
+        #{poke sg_process_count, sleeping} p countSleeping
+        #{poke sg_process_count, stopped} p countStopped
+        #{poke sg_process_count, zombie} p countZombie
 
 foreign import ccall safe "statgrab.h sg_get_process_count_of"
     sg_get_process_count_of :: Source -> IO (Ptr ProcessCount)
