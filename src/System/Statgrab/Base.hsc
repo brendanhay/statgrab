@@ -2,7 +2,6 @@
 {-# LANGUAGE ForeignFunctionInterface   #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE RecordWildCards            #-}
-{-# LANGUAGE TemplateHaskell            #-}
 
 -- Module      : System.Statgrab.Base
 -- Copyright   : (c) 2013 Brendan Hay <brendan.g.hay@gmail.com>
@@ -127,6 +126,48 @@ foreign import ccall safe "statgrab.h sg_"
 
 foreign import ccall safe "statgrab.h sg_"
      sg_unlock_mutex :: CString -> IO Error
+
+foreign import ccall safe "statgrab.h sg_free_host_info"
+    sg_free_host_info :: Ptr () -> IO Error
+
+foreign import ccall safe "statgrab.h sg_free_cpu_stats"
+    sg_free_cpu_stats :: Ptr () -> IO Error
+
+foreign import ccall safe "statgrab.h sg_free_cpu_percents"
+    sg_free_cpu_percents :: Ptr () -> IO Error
+
+foreign import ccall safe "statgrab.h sg_free_mem_stats"
+    sg_free_mem_stats :: Ptr () -> IO Error
+
+foreign import ccall safe "statgrab.h sg_free_load_stats"
+    sg_free_load_stats :: Ptr () -> IO Error
+
+foreign import ccall safe "statgrab.h sg_free_user_stats"
+    sg_free_user_stats :: Ptr () -> IO Error
+
+foreign import ccall safe "statgrab.h sg_free_swap_stats"
+    sg_free_swap_stats :: Ptr () -> IO Error
+
+foreign import ccall safe "statgrab.h sg_free_fs_stats"
+    sg_free_fs_stats :: Ptr () -> IO Error
+
+foreign import ccall safe "statgrab.h sg_free_disk_io_stats"
+    sg_free_disk_io_stats :: Ptr () -> IO Error
+
+foreign import ccall safe "statgrab.h sg_free_network_io_stats"
+    sg_free_network_io_stats :: Ptr () -> IO Error
+
+foreign import ccall safe "statgrab.h sg_free_network_iface_stats"
+    sg_free_network_iface_stats :: Ptr () -> IO Error
+
+foreign import ccall safe "statgrab.h sg_free_page_stats"
+    sg_free_page_stats :: Ptr () -> IO Error
+
+foreign import ccall safe "statgrab.h sg_free_process_stats"
+    sg_free_process_stats :: Ptr () -> IO Error
+
+foreign import ccall safe "statgrab.h sg_free_process_count"
+    sg_free_process_count :: Ptr () -> IO Error
 
 newtype HostState = HostState { unHostState :: CInt }
     deriving (Eq, Show, Storable)
