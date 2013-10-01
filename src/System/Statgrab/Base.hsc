@@ -202,13 +202,13 @@ instance Storable CpuStats where
         <*> #{peek sg_cpu_stats, systime} p
 
     poke p CpuStats{..} = do
-        #{poke sg_cpu_stats, user} p
-        #{poke sg_cpu_stats, kernel} p
-        #{poke sg_cpu_stats, idle} p
-        #{poke sg_cpu_stats, iowait} p
-        #{poke sg_cpu_stats, swap} p
-        #{poke sg_cpu_stats, nice} p
-        #{poke sg_cpu_stats, total} p
+        #{poke sg_cpu_stats, user} p cpuUser
+        #{poke sg_cpu_stats, kernel} p cpuKernel
+        #{poke sg_cpu_stats, idle} p cpuIdle
+        #{poke sg_cpu_stats, iowait} p cpuIOWait
+        #{poke sg_cpu_stats, swap} p cpuSwap
+        #{poke sg_cpu_stats, nice} p cpuNice
+        #{poke sg_cpu_stats, total} p cpuTotal
         #{poke sg_cpu_stats, context_switches} p cpuCtxSwitches
         #{poke sg_cpu_stats, voluntary_context_switches} p cpuVoluntaryCtxSwitches
         #{poke sg_cpu_stats, involuntary_context_switches} p cpuInvoluntaryCtxSwitches
@@ -275,7 +275,7 @@ foreign import ccall safe "statgrab.h sg_get_cpu_percents_of"
     sg_get_cpu_percents_of :: CpuPercentSource -> Entries -> IO (Ptr CpuPercents)
 
 foreign import ccall safe "statgrab.h sg_get_cpu_percents_r"
-    sg_get_cpu_percents_r :: CpuStats -> Entries -> IO (Ptr CpuPercents)
+    sg_get_cpu_percents_r :: Ptr CpuStats -> Entries -> IO (Ptr CpuPercents)
 
 data MemStats = MemStats
     { memTotal   :: {-# UNPACK #-} !CULong
@@ -446,27 +446,6 @@ instance Storable FSStats where
     alignment _ = #{alignment sg_fs_stats}
     sizeOf    _ = #{size      sg_fs_stats}
 
-    { fsDeviceName  :: {-# UNPACK #-} !CString
-    , fsType        :: {-# UNPACK #-} !CString
-    , fsMountPoint  :: {-# UNPACK #-} !CString
-    , fsDeviceType  :: {-# UNPACK #-} !DeviceType
-    , fsSize        :: {-# UNPACK #-} !CULong
-    , fsUsed        :: {-# UNPACK #-} !CULong
-    , fsFree        :: {-# UNPACK #-} !CULong
-    , fsAvail       :: {-# UNPACK #-} !CULong
-    , fsTotalInodes :: {-# UNPACK #-} !CULong
-    , fsUsedInodes  :: {-# UNPACK #-} !CULong
-    , fsFreeInodes  :: {-# UNPACK #-} !CULong
-    , fsAvailInodes :: {-# UNPACK #-} !CULong
-    , fsIOSize      :: {-# UNPACK #-} !CULong
-    , fsBlockSize   :: {-# UNPACK #-} !CULong
-    , fsTotalBlocks :: {-# UNPACK #-} !CULong
-    , fsFreeBlocks  :: {-# UNPACK #-} !CULong
-    , fsUsedBlocks  :: {-# UNPACK #-} !CULong
-    , fsAvailBlocks :: {-# UNPACK #-} !CULong
-    , fsSystime     :: {-# UNPACK #-} !CTime
-    }
-
     peek p = FSStats
         <$> #{peek sg_fs_stats, device_name} p
         <*> #{peek sg_fs_stats, fs_type} p
@@ -494,7 +473,7 @@ instance Storable FSStats where
         #{poke sg_fs_stats, mnt_point} p fsMountPoint
         #{poke sg_fs_stats, device_type} p fsDeviceType
         #{poke sg_fs_stats, size} p fsSize
-        #{poke sg_fs_stats, user} p fsUser
+        #{poke sg_fs_stats, used} p fsUsed
         #{poke sg_fs_stats, free} p fsFree
         #{poke sg_fs_stats, avail} p fsAvail
         #{poke sg_fs_stats, total_inodes} p fsTotalInodes
@@ -530,10 +509,10 @@ foreign import ccall safe "statgrab.h sg_get_fs_stats_diff_between"
      sg_get_fs_stats_diff_between :: Ptr FSStats -> Ptr FSStats -> Entries -> IO (Ptr FSStats)
 
 foreign import ccall safe "statgrab.h sg_fs_compare_device_name"
-     sg_fs_compare_device_name :: Ptr () -> Ptr () -> IO (CInt)
+     sg_fs_compare_device_name :: Ptr () -> Ptr () -> IO CInt
 
 foreign import ccall safe "statgrab.h sg_fs_compare_mnt_point"
-     sg_fs_compare_mnt_point :: Ptr () -> Ptr () -> IO (CInt)
+     sg_fs_compare_mnt_point :: Ptr () -> Ptr () -> IO CInt
 
 data DiskIOStats = DiskIOStats
     { diskName    :: {-# UNPACK #-} !CString
@@ -577,43 +556,59 @@ foreign import ccall safe "statgrab.h sg_disk_io_compare_name"
 foreign import ccall safe "statgrab.h sg_disk_io_compare_traffic"
     sg_disk_io_compare_traffic :: Ptr () -> Ptr () -> IO CInt
 
--- data NetworkIOStats = NetworkIOStats
---     { ifaceName       :: {-# UNPACK #-} !CString
---     , ifaceTX         :: {-# UNPACK #-} !CString
---     , ifaceRX         :: {-# UNPACK #-} !CString
---     , ifaceIPackets   :: {-# UNPACK #-} !CString
---     , ifaceOPackets   :: {-# UNPACK #-} !CString
---     , ifaceIErrors    :: {-# UNPACK #-} !CString
---     , ifaceOErrors    :: {-# UNPACK #-} !CString
---     , ifaceCollisions :: {-# UNPACK #-} !CString
---     , ifaceSystem     :: {-# UNPACK #-} !CTime
---     }
+data NetworkIOStats = NetworkIOStats
+    { ifaceName       :: {-# UNPACK #-} !CString
+    , ifaceTX         :: {-# UNPACK #-} !CULong
+    , ifaceRX         :: {-# UNPACK #-} !CULong
+    , ifaceIPackets   :: {-# UNPACK #-} !CULong
+    , ifaceOPackets   :: {-# UNPACK #-} !CULong
+    , ifaceIErrors    :: {-# UNPACK #-} !CULong
+    , ifaceOErrors    :: {-# UNPACK #-} !CULong
+    , ifaceCollisions :: {-# UNPACK #-} !CULong
+    , ifaceSystem     :: {-# UNPACK #-} !CTime
+    }
 
--- instance Storable NetworkIOStats where
---     alignment _ = #{alignment sg_network_io_stats}
---     sizeOf    _ = #{size      sg_network_io_stats}
+instance Storable NetworkIOStats where
+    alignment _ = #{alignment sg_network_io_stats}
+    sizeOf    _ = #{size      sg_network_io_stats}
 
---     peek p = NetworkIOStats
---         <$> #{peek sg_network_io_stats, interface_name} p
---         <*> #{peek sg_network_io_stats, tx} p
---         <*> #{peek sg_network_io_stats, rx} p
---         <*> #{peek sg_network_io_stats, ipackets} p
---         <*> #{peek sg_network_io_stats, opackets} p
---         <*> #{peek sg_network_io_stats, ierrors} p
---         <*> #{peek sg_network_io_stats, oerrors} p
---         <*> #{peek sg_network_io_stats, collisions} p
---         <*> #{peek sg_network_io_stats, systime} p
+    peek p = NetworkIOStats
+        <$> #{peek sg_network_io_stats, interface_name} p
+        <*> #{peek sg_network_io_stats, tx} p
+        <*> #{peek sg_network_io_stats, rx} p
+        <*> #{peek sg_network_io_stats, ipackets} p
+        <*> #{peek sg_network_io_stats, opackets} p
+        <*> #{peek sg_network_io_stats, ierrors} p
+        <*> #{peek sg_network_io_stats, oerrors} p
+        <*> #{peek sg_network_io_stats, collisions} p
+        <*> #{peek sg_network_io_stats, systime} p
 
---     poke p NetworkIOStats{..} = do
---         #{poke sg_network_io_stats, interface_name} p ifaceName
---         #{poke sg_network_io_stats, tx} p ifaceTX
---         #{poke sg_network_io_stats, rx} p ifaceRX
---         #{poke sg_network_io_stats, ipackets} p ifaceIPackets
---         #{poke sg_network_io_stats, opackets} p ifaceOPackets
---         #{poke sg_network_io_stats, ierrors} p ifaceIErrors
---         #{poke sg_network_io_stats, oerrors} p ifaceOErrors
---         #{poke sg_network_io_stats, collisions} p ifaceCollisions
---         #{poke sg_network_io_stats, systime} p ifaceSystem
+    poke p NetworkIOStats{..} = do
+        #{poke sg_network_io_stats, interface_name} p ifaceName
+        #{poke sg_network_io_stats, tx} p ifaceTX
+        #{poke sg_network_io_stats, rx} p ifaceRX
+        #{poke sg_network_io_stats, ipackets} p ifaceIPackets
+        #{poke sg_network_io_stats, opackets} p ifaceOPackets
+        #{poke sg_network_io_stats, ierrors} p ifaceIErrors
+        #{poke sg_network_io_stats, oerrors} p ifaceOErrors
+        #{poke sg_network_io_stats, collisions} p ifaceCollisions
+        #{poke sg_network_io_stats, systime} p ifaceSystem
+
+foreign import ccall safe "statgrab.h sg_get_network_io_stats"
+     sg_get_network_io_stats :: Entries -> IO (Ptr NetworkIOStats)
+
+foreign import ccall safe "statgrab.h sg_get_network_io_stats_r"
+     sg_get_network_io_stats_r :: Entries -> IO (Ptr NetworkIOStats)
+
+foreign import ccall safe "statgrab.h sg_get_network_io_stats_diff"
+     sg_get_network_io_stats_diff :: Entries -> IO (Ptr NetworkIOStats)
+
+foreign import ccall safe "statgrab.h sg_get_network_io_stats_diff_between"
+     sg_get_network_io_stats_diff_between ::
+         Ptr NetworkIOStats -> Ptr NetworkIOStats -> Entries -> IO (Ptr NetworkIOStats)
+
+foreign import ccall safe "statgrab.h sg_network_io_compare_name"
+     sg_network_io_compare_name :: Ptr () -> Ptr () -> IO (CInt)
 
 -- data NetworkIFaceStats = NetworkIFaceStats
 --     { ifaceStatsName :: {-# UNPACK #-} !CString
