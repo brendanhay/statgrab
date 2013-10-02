@@ -1,5 +1,4 @@
 {-# LANGUAGE CPP                        #-}
-{-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE ForeignFunctionInterface   #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE RecordWildCards            #-}
@@ -27,28 +26,25 @@ import Foreign.C.Types
 
 #let alignment t = "%lu", (unsigned long)offsetof(struct {char x__; t (y__); }, y__)
 
-class Storable a => Info a where
+class Pointer a where
     acquire :: IO (Ptr a)
-    copy    :: Ptr a -> IO a
     release :: Ptr a -> IO ()
 
-    copy ptr = peek ptr >>= \x -> release ptr >> return x
-
-type ErrorDetailsPtr     = Ptr ErrorDetails
-type HostPtr             = Ptr Host
-type CPUPtr              = Ptr CPU
-type CPUPercentPtr      = Ptr CPUPercent
-type MemoryPtr           = Ptr Memory
-type LoadPtr             = Ptr Load
-type UserPtr             = Ptr User
-type SwapPtr             = Ptr Swap
-type FileSystemPtr       = Ptr FileSystem
-type DiskIOPtr           = Ptr DiskIO
-type NetworkIOPtr        = Ptr NetworkIO
-type NetworkInterfacePtr = Ptr NetworkInterface
-type PagePtr             = Ptr Page
-type ProcessPtr          = Ptr Process
-type ProcessCountPtr     = Ptr ProcessCount
+type ErrorDetailsPtr     = Ptr CErrorDetails
+type HostPtr             = Ptr CHost
+type CPUPtr              = Ptr CCPU
+type CPUPercentPtr       = Ptr CCPUPercent
+type MemoryPtr           = Ptr CMemory
+type LoadPtr             = Ptr CLoad
+type UserPtr             = Ptr CUser
+type SwapPtr             = Ptr CSwap
+type FileSystemPtr       = Ptr CFileSystem
+type DiskIOPtr           = Ptr CDiskIO
+type NetworkIOPtr        = Ptr CNetworkIO
+type NetworkInterfacePtr = Ptr CNetworkInterface
+type PagePtr             = Ptr CPage
+type ProcessPtr          = Ptr CProcess
+type ProcessCountPtr     = Ptr CProcessCount
 
 type Entries = Ptr CSize
 
@@ -103,7 +99,7 @@ newtype Error = Error { unError :: CInt }
   , errMutexUnlock        = SG_ERROR_MUTEX_UNLOCK
 }
 
-data ErrorDetails = ErrorDetails
+data CErrorDetails = CErrorDetails
     { erError :: {-# UNPACK #-} !Error
     , erValue :: {-# UNPACK #-} !CInt
     , erArg   :: {-# UNPACK #-} !CString
@@ -162,7 +158,7 @@ newtype HostState = HostState { unHostState :: CInt }
     , stateHardwareVirtual = sg_hardware_virtualized
 }
 
-data Host = Host
+data CHost = CHost
     { hostOsName    :: {-# UNPACK #-} !CString
     , hostOsRelease :: {-# UNPACK #-} !CString
     , hostOsVersion :: {-# UNPACK #-} !CString
@@ -176,11 +172,11 @@ data Host = Host
     , hostSystime   :: {-# UNPACK #-} !CTime
     } deriving (Eq, Show)
 
-instance Storable Host where
+instance Storable CHost where
     alignment _ = #{alignment sg_host_info}
     sizeOf    _ = #{size      sg_host_info}
 
-    peek p = Host
+    peek p = CHost
         <$> #{peek sg_host_info, os_name} p
         <*> #{peek sg_host_info, os_release} p
         <*> #{peek sg_host_info, os_version} p
@@ -193,7 +189,7 @@ instance Storable Host where
         <*> #{peek sg_host_info, uptime} p
         <*> #{peek sg_host_info, systime} p
 
-    poke p Host{..} = do
+    poke p CHost{..} = do
         #{poke sg_host_info, os_name} p hostOsName
         #{poke sg_host_info, os_release} p hostOsRelease
         #{poke sg_host_info, os_version} p hostOsVersion
@@ -206,6 +202,10 @@ instance Storable Host where
         #{poke sg_host_info, uptime} p hostUptime
         #{poke sg_host_info, systime} p hostSystime
 
+instance Pointer CHost where
+    acquire = alloca sg_get_host_info
+    release = void . sg_free_host_info
+
 foreign import ccall safe "statgrab.h sg_get_host_info"
     sg_get_host_info :: Entries -> IO HostPtr
 
@@ -215,11 +215,7 @@ foreign import ccall safe "statgrab.h sg_get_host_info_r"
 foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_host_info :: HostPtr -> IO Error
 
-instance Info Host where
-    acquire = alloca sg_get_host_info
-    release = void . sg_free_host_info
-
-data CPU = CPU
+data CCPU = CCPU
     { cpuUser                   :: {-# UNPACK #-} !CLLong
     , cpuKernel                 :: {-# UNPACK #-} !CLLong
     , cpuIdle                   :: {-# UNPACK #-} !CLLong
@@ -236,11 +232,11 @@ data CPU = CPU
     , cpuSystime                :: {-# UNPACK #-} !CTime
     }
 
-instance Storable CPU where
+instance Storable CCPU where
     alignment _ = #{alignment sg_cpu_stats}
     sizeOf    _ = #{size      sg_cpu_stats}
 
-    peek p = CPU
+    peek p = CCPU
         <$> #{peek sg_cpu_stats, user} p
         <*> #{peek sg_cpu_stats, kernel} p
         <*> #{peek sg_cpu_stats, idle} p
@@ -256,7 +252,7 @@ instance Storable CPU where
         <*> #{peek sg_cpu_stats, soft_interrupts} p
         <*> #{peek sg_cpu_stats, systime} p
 
-    poke p CPU{..} = do
+    poke p CCPU{..} = do
         #{poke sg_cpu_stats, user} p cpuUser
         #{poke sg_cpu_stats, kernel} p cpuKernel
         #{poke sg_cpu_stats, idle} p cpuIdle
@@ -282,15 +278,12 @@ foreign import ccall safe "statgrab.h sg_get_cpu_stats_r"
     sg_get_cpu_stats_r :: Entries -> IO CPUPtr
 
 foreign import ccall safe "statgrab.h sg_get_cpu_stats_diff_between"
-    sg_get_cpu_stats_diff_between :: Ptr CPU
-                                  -> Ptr CPU
-                                  -> Entries
-                                  -> IO CPUPtr
+    sg_get_cpu_stats_diff_between :: CPUPtr -> CPUPtr -> Entries -> IO CPUPtr
 
 foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_cpu_stats :: Ptr () -> IO Error
 
-data CPUPercent = CPUPercent
+data CCPUPercent = CCPUPercent
     { cpuPctUser      :: {-# UNPACK #-} !CDouble
     , cpuPctKernel    :: {-# UNPACK #-} !CDouble
     , cpuPctIdle      :: {-# UNPACK #-} !CDouble
@@ -300,11 +293,11 @@ data CPUPercent = CPUPercent
     , cpuPctTimeTaken :: {-# UNPACK #-} !CTime
     }
 
-instance Storable CPUPercent where
+instance Storable CCPUPercent where
     alignment _ = #{alignment sg_cpu_percents}
     sizeOf    _ = #{size      sg_cpu_percents}
 
-    peek p = CPUPercent
+    peek p = CCPUPercent
         <$> #{peek sg_cpu_percents, user} p
         <*> #{peek sg_cpu_percents, kernel} p
         <*> #{peek sg_cpu_percents, idle} p
@@ -313,7 +306,7 @@ instance Storable CPUPercent where
         <*> #{peek sg_cpu_percents, nice} p
         <*> #{peek sg_cpu_percents, time_taken} p
 
-    poke p CPUPercent{..} = do
+    poke p CCPUPercent{..} = do
         #{poke sg_cpu_percents, user} p cpuPctUser
         #{poke sg_cpu_percents, kernel} p cpuPctKernel
         #{poke sg_cpu_percents, idle} p cpuPctIdle
@@ -326,21 +319,21 @@ newtype CPUPercentSource = CPUPercentSource { unCPUPercentSource :: CInt }
     deriving (Eq, Show, Storable)
 
 #{enum CPUPercentSource, CPUPercentSource
-    , sourceEntireCPU  = sg_entire_cpu_percent
-    , sourceDiffCPU    = sg_last_diff_cpu_percent
-    , sourceNewDiffCPU = sg_new_diff_cpu_percent
+    , sourceEntireCCPU = sg_entire_cpu_percent
+    , sourceDiffCCPU   = sg_last_diff_cpu_percent
+    , sourceNewDiffCCPU= sg_new_diff_cpu_percent
 }
 
 foreign import ccall safe "statgrab.h sg_get_cpu_percents_of"
     sg_get_cpu_percents_of :: CPUPercentSource -> Entries -> IO CPUPercentPtr
 
 foreign import ccall safe "statgrab.h sg_get_cpu_percents_r"
-    sg_get_cpu_percents_r :: Ptr CPU -> Entries -> IO CPUPercentPtr
+    sg_get_cpu_percents_r :: CPUPtr -> Entries -> IO CPUPercentPtr
 
 foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_cpu_percents :: Ptr () -> IO Error
 
-data Memory = Memory
+data CMemory = CMemory
     { memTotal   :: {-# UNPACK #-} !CULLong
     , memFree    :: {-# UNPACK #-} !CULLong
     , memUsed    :: {-# UNPACK #-} !CULLong
@@ -348,18 +341,18 @@ data Memory = Memory
     , memSystime :: {-# UNPACK #-} !CTime
     }
 
-instance Storable Memory where
+instance Storable CMemory where
     alignment _ = #{alignment sg_mem_stats}
     sizeOf    _ = #{size      sg_mem_stats}
 
-    peek p = Memory
+    peek p = CMemory
         <$> #{peek sg_mem_stats, total} p
         <*> #{peek sg_mem_stats, free} p
         <*> #{peek sg_mem_stats, used} p
         <*> #{peek sg_mem_stats, cache} p
         <*> #{peek sg_mem_stats, systime} p
 
-    poke p Memory{..} = do
+    poke p CMemory{..} = do
         #{poke sg_mem_stats, total} p memTotal
         #{poke sg_mem_stats, free} p memFree
         #{poke sg_mem_stats, used} p memUsed
@@ -374,24 +367,24 @@ foreign import ccall safe "statgrab.h sg_get_mem_stats_r"
 foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_mem_stats :: Ptr () -> IO Error
 
-data Load = Load
+data CLoad = CLoad
     { load1       :: {-# UNPACK #-} !CDouble
     , load5       :: {-# UNPACK #-} !CDouble
     , load15      :: {-# UNPACK #-} !CDouble
     , loadSystime :: {-# UNPACK #-} !CTime
     }
 
-instance Storable Load where
+instance Storable CLoad where
     alignment _ = #{alignment sg_load_stats}
     sizeOf    _ = #{size      sg_load_stats}
 
-    peek p = Load
+    peek p = CLoad
         <$> #{peek sg_load_stats, min1} p
         <*> #{peek sg_load_stats, min5} p
         <*> #{peek sg_load_stats, min15} p
         <*> #{peek sg_load_stats, systime} p
 
-    poke p Load{..} = do
+    poke p CLoad{..} = do
         #{poke sg_load_stats, min1} p load1
         #{poke sg_load_stats, min5} p load5
         #{poke sg_load_stats, min15} p load15
@@ -406,7 +399,7 @@ foreign import ccall safe "statgrab.h sg_get_load_stats_r"
 foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_load_stats :: Ptr () -> IO Error
 
-data User = User
+data CUser = CUser
     { userLoginName    :: {-# UNPACK #-} !CString
     , userRecordId     :: {-# UNPACK #-} !CString
     , userRecordIdSize :: {-# UNPACK #-} !CSize
@@ -417,11 +410,11 @@ data User = User
     , userSystime      :: {-# UNPACK #-} !CTime
     }
 
-instance Storable User where
+instance Storable CUser where
     alignment _ = #{alignment sg_user_stats}
     sizeOf    _ = #{size      sg_user_stats}
 
-    peek p = User
+    peek p = CUser
         <$> #{peek sg_user_stats, login_name} p
         <*> #{peek sg_user_stats, record_id} p
         <*> #{peek sg_user_stats, record_id_size} p
@@ -431,7 +424,7 @@ instance Storable User where
         <*> #{peek sg_user_stats, login_time} p
         <*> #{peek sg_user_stats, systime} p
 
-    poke p User{..} = do
+    poke p CUser{..} = do
         #{poke sg_user_stats, login_name} p userLoginTime
         #{poke sg_user_stats, record_id} p userRecordId
         #{poke sg_user_stats, record_id_size} p userRecordIdSize
@@ -450,24 +443,24 @@ foreign import ccall safe "statgrab.h sg_get_user_stats_r"
 foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_user_stats :: Ptr () -> IO Error
 
-data Swap = Swap
+data CSwap = CSwap
     { swapTotal   :: {-# UNPACK #-} !CULLong
     , swapUsed    :: {-# UNPACK #-} !CULLong
     , swapFree    :: {-# UNPACK #-} !CULLong
     , swapSystime :: {-# UNPACK #-} !CTime
     }
 
-instance Storable Swap where
+instance Storable CSwap where
     alignment _ = #{alignment sg_swap_stats}
     sizeOf    _ = #{size      sg_swap_stats}
 
-    peek p = Swap
+    peek p = CSwap
         <$> #{peek sg_swap_stats, total} p
         <*> #{peek sg_swap_stats, used} p
         <*> #{peek sg_swap_stats, free} p
         <*> #{peek sg_swap_stats, systime} p
 
-    poke p Swap{..} = do
+    poke p CSwap{..} = do
         #{poke sg_swap_stats, total} p swapTotal
         #{poke sg_swap_stats, used} p swapUsed
         #{poke sg_swap_stats, free} p swapFree
@@ -495,7 +488,7 @@ newtype DeviceType = DeviceType { unDeviceType :: CInt }
     , deviceAllTypes = sg_fs_alltypes
 }
 
-data FileSystem = FileSystem
+data CFileSystem = CFileSystem
     { fsDeviceName  :: {-# UNPACK #-} !CString
     , fsType        :: {-# UNPACK #-} !CString
     , fsMountPoint  :: {-# UNPACK #-} !CString
@@ -517,11 +510,11 @@ data FileSystem = FileSystem
     , fsSystime     :: {-# UNPACK #-} !CTime
     }
 
-instance Storable FileSystem where
+instance Storable CFileSystem where
     alignment _ = #{alignment sg_fs_stats}
     sizeOf    _ = #{size      sg_fs_stats}
 
-    peek p = FileSystem
+    peek p = CFileSystem
         <$> #{peek sg_fs_stats, device_name} p
         <*> #{peek sg_fs_stats, fs_type} p
         <*> #{peek sg_fs_stats, mnt_point} p
@@ -542,7 +535,7 @@ instance Storable FileSystem where
         <*> #{peek sg_fs_stats, avail_blocks} p
         <*> #{peek sg_fs_stats, systime} p
 
-    poke p FileSystem{..} = do
+    poke p CFileSystem{..} = do
         #{poke sg_fs_stats, device_name} p fsDeviceName
         #{poke sg_fs_stats, fs_type} p fsType
         #{poke sg_fs_stats, mnt_point} p fsMountPoint
@@ -581,8 +574,8 @@ foreign import ccall safe "statgrab.h sg_get_fs_stats_diff"
      sg_get_fs_stats_diff :: Entries -> IO FileSystemPtr
 
 foreign import ccall safe "statgrab.h sg_get_fs_stats_diff_between"
-     sg_get_fs_stats_diff_between :: Ptr FileSystem
-                                  -> Ptr FileSystem
+     sg_get_fs_stats_diff_between :: FileSystemPtr
+                                  -> FileSystemPtr
                                   -> Entries
                                   -> IO FileSystemPtr
 
@@ -595,24 +588,24 @@ foreign import ccall safe "statgrab.h sg_fs_compare_mnt_point"
 foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_fs_stats :: Ptr () -> IO Error
 
-data DiskIO = DiskIO
+data CDiskIO = CDiskIO
     { diskName    :: {-# UNPACK #-} !CString
     , diskRead    :: {-# UNPACK #-} !CULLong
     , diskWrite   :: {-# UNPACK #-} !CULLong
     , diskSystime :: {-# UNPACK #-} !CTime
     }
 
-instance Storable DiskIO where
+instance Storable CDiskIO where
     alignment _ = #{alignment sg_disk_io_stats}
     sizeOf    _ = #{size      sg_disk_io_stats}
 
-    peek p = DiskIO
+    peek p = CDiskIO
         <$> #{peek sg_disk_io_stats, disk_name} p
         <*> #{peek sg_disk_io_stats, read_bytes} p
         <*> #{peek sg_disk_io_stats, write_bytes} p
         <*> #{peek sg_disk_io_stats, systime} p
 
-    poke p DiskIO{..} = do
+    poke p CDiskIO{..} = do
         #{poke sg_disk_io_stats, disk_name} p diskName
         #{poke sg_disk_io_stats, read_bytes} p diskRead
         #{poke sg_disk_io_stats, write_bytes} p diskWrite
@@ -642,7 +635,7 @@ foreign import ccall safe "statgrab.h sg_disk_io_compare_traffic"
 foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_disk_io_stats :: Ptr () -> IO Error
 
-data NetworkIO = NetworkIO
+data CNetworkIO = CNetworkIO
     { ifaceIOName     :: {-# UNPACK #-} !CString
     , ifaceTX         :: {-# UNPACK #-} !CULLong
     , ifaceRX         :: {-# UNPACK #-} !CULLong
@@ -654,11 +647,11 @@ data NetworkIO = NetworkIO
     , ifaceSystem     :: {-# UNPACK #-} !CTime
     }
 
-instance Storable NetworkIO where
+instance Storable CNetworkIO where
     alignment _ = #{alignment sg_network_io_stats}
     sizeOf    _ = #{size      sg_network_io_stats}
 
-    peek p = NetworkIO
+    peek p = CNetworkIO
         <$> #{peek sg_network_io_stats, interface_name} p
         <*> #{peek sg_network_io_stats, tx} p
         <*> #{peek sg_network_io_stats, rx} p
@@ -669,7 +662,7 @@ instance Storable NetworkIO where
         <*> #{peek sg_network_io_stats, collisions} p
         <*> #{peek sg_network_io_stats, systime} p
 
-    poke p NetworkIO{..} = do
+    poke p CNetworkIO{..} = do
         #{poke sg_network_io_stats, interface_name} p ifaceIOName
         #{poke sg_network_io_stats, tx} p ifaceTX
         #{poke sg_network_io_stats, rx} p ifaceRX
@@ -702,7 +695,7 @@ foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_network_io_stats :: Ptr () -> IO Error
 
 newtype InterfaceMode = InterfaceMode { unMode :: CInt }
-    deriving (Eq, Ord, Storable)
+    deriving (Eq, Show, Storable)
 
 #{enum InterfaceMode, InterfaceMode
     , duplexFull    = SG_IFACE_DUPLEX_FULL
@@ -711,14 +704,14 @@ newtype InterfaceMode = InterfaceMode { unMode :: CInt }
 }
 
 newtype InterfaceStatus = InterfaceStatus { unStatus :: CInt }
-    deriving (Eq, Ord, Storable)
+    deriving (Eq, Show, Storable)
 
 #{enum InterfaceStatus, InterfaceStatus
     , statusDown = SG_IFACE_DOWN
     , statusUp   = SG_IFACE_UP
 }
 
-data NetworkInterface = NetworkInterface
+data CNetworkInterface = CNetworkInterface
     { ifaceName    :: {-# UNPACK #-} !CString
     , ifaceSpeed   :: {-# UNPACK #-} !CULLong
     , ifaceFactor  :: {-# UNPACK #-} !CULLong
@@ -727,11 +720,11 @@ data NetworkInterface = NetworkInterface
     , ifaceSystime :: {-# UNPACK #-} !CTime
     }
 
-instance Storable NetworkInterface where
+instance Storable CNetworkInterface where
     alignment _ = #{alignment sg_network_iface_stats}
     sizeOf    _ = #{size      sg_network_iface_stats}
 
-    peek p = NetworkInterface
+    peek p = CNetworkInterface
         <$> #{peek sg_network_iface_stats, interface_name} p
         <*> #{peek sg_network_iface_stats, speed} p
         <*> #{peek sg_network_iface_stats, factor} p
@@ -739,7 +732,7 @@ instance Storable NetworkInterface where
         <*> #{peek sg_network_iface_stats, up} p
         <*> #{peek sg_network_iface_stats, systime} p
 
-    poke p NetworkInterface{..} = do
+    poke p CNetworkInterface{..} = do
         #{poke sg_network_iface_stats, interface_name} p ifaceName
         #{poke sg_network_iface_stats, speed} p ifaceSpeed
         #{poke sg_network_iface_stats, factor} p ifaceFactor
@@ -759,22 +752,22 @@ foreign import ccall safe "statgrab.h sg_network_iface_compare_name"
 foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_network_iface_stats :: Ptr () -> IO Error
 
-data Page = Page
+data CPage = CPage
     { pagesIn      :: {-# UNPACK #-} !CULLong
     , pagesOut     :: {-# UNPACK #-} !CULLong
     , pagesSysTime :: {-# UNPACK #-} !CTime
     }
 
-instance Storable Page where
+instance Storable CPage where
     alignment _ = #{alignment sg_page_stats}
     sizeOf    _ = #{size      sg_page_stats}
 
-    peek p = Page
+    peek p = CPage
         <$> #{peek sg_page_stats, pages_pagein} p
         <*> #{peek sg_page_stats, pages_pageout} p
         <*> #{peek sg_page_stats, systime} p
 
-    poke p Page{..} = do
+    poke p CPage{..} = do
         #{poke sg_page_stats, pages_pagein} p pagesIn
         #{poke sg_page_stats, pages_pageout} p pagesOut
         #{poke sg_page_stats, systime} p pagesSysTime
@@ -798,7 +791,7 @@ foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_page_stats :: Ptr () -> IO Error
 
 newtype ProcessState = ProcessState { processState :: CInt }
-    deriving (Eq, Ord, Storable)
+    deriving (Eq, Show, Storable)
 
 #{enum ProcessState, ProcessState
     , stateRunning  = SG_PROCESS_STATE_RUNNING
@@ -808,7 +801,7 @@ newtype ProcessState = ProcessState { processState :: CInt }
     , stateUnknown  = SG_PROCESS_STATE_UNKNOWN
 }
 
-data Process = Process
+data CProcess = CProcess
     { procName        :: {-# UNPACK #-} !CString
     , procTitle       :: {-# UNPACK #-} !CString
     , procPid         :: {-# UNPACK #-} !CInt
@@ -832,11 +825,11 @@ data Process = Process
     , procSystime     :: {-# UNPACK #-} !CTime
     }
 
-instance Storable Process where
+instance Storable CProcess where
     alignment _ = #{alignment sg_process_stats}
     sizeOf    _ = #{size      sg_process_stats}
 
-    peek p = Process
+    peek p = CProcess
         <$> #{peek sg_process_stats, process_name} p
         <*> #{peek sg_process_stats, proctitle} p
         <*> #{peek sg_process_stats, pid} p
@@ -859,7 +852,7 @@ instance Storable Process where
         <*> #{peek sg_process_stats, state} p
         <*> #{peek sg_process_stats, systime} p
 
-    poke p Process{..} = do
+    poke p CProcess{..} = do
         #{poke sg_process_stats, process_name} p procName
         #{poke sg_process_stats, proctitle} p procTitle
         #{poke sg_process_stats, pid} p procPid
@@ -923,7 +916,7 @@ newtype ProcessSource = ProcessSource { unSource :: CInt }
     , sourceLast   = sg_last_process_count
 }
 
-data ProcessCount = ProcessCount
+data CProcessCount = CProcessCount
     { countTotal    :: {-# UNPACK #-} !CULLong
     , countRunning  :: {-# UNPACK #-} !CULLong
     , countSleeping :: {-# UNPACK #-} !CULLong
@@ -933,11 +926,11 @@ data ProcessCount = ProcessCount
     , countSystime  :: {-# UNPACK #-} !CTime
     }
 
-instance Storable ProcessCount where
+instance Storable CProcessCount where
     alignment _ = #{alignment sg_process_count}
     sizeOf    _ = #{size      sg_process_count}
 
-    peek p = ProcessCount
+    peek p = CProcessCount
         <$> #{peek sg_process_count, total} p
         <*> #{peek sg_process_count, running} p
         <*> #{peek sg_process_count, sleeping} p
@@ -946,7 +939,7 @@ instance Storable ProcessCount where
         <*> #{peek sg_process_count, unknown} p
         <*> #{peek sg_process_count, systime} p
 
-    poke p ProcessCount{..} = do
+    poke p CProcessCount{..} = do
         #{poke sg_process_count, total} p countTotal
         #{poke sg_process_count, running} p countRunning
         #{poke sg_process_count, sleeping} p countSleeping

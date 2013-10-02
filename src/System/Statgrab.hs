@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 -- Module      : System.Statgrab
@@ -17,26 +18,26 @@ module System.Statgrab
     -- * Operations on the @Stats@ Monad
       Stats
     , runStats
-    , inspect
+    , snapshot
 
     -- * Concurrency
     , async
 
     -- * Statistics
     , Host             (..)
-    , CPU              (..)
-    , CPUPercent       (..)
-    , Memory           (..)
-    , Load             (..)
-    , User             (..)
-    , Swap             (..)
-    , FileSystem       (..)
-    , DiskIO           (..)
-    , NetworkIO        (..)
-    , NetworkInterface (..)
-    , Page             (..)
-    , Process          (..)
-    , ProcessCount     (..)
+    -- , CPU              (..)
+    -- , CPUPercent       (..)
+    -- , Memory           (..)
+    -- , Load             (..)
+    -- , User             (..)
+    -- , Swap             (..)
+    -- , FileSystem       (..)
+    -- , DiskIO           (..)
+    -- , NetworkIO        (..)
+    -- , NetworkInterface (..)
+    -- , Page             (..)
+    -- , Process          (..)
+    -- , ProcessCount     (..)
 
     -- * Enums
     , HostState        (..)
@@ -63,6 +64,7 @@ import           Control.Monad.Trans.Reader
 import           Data.IORef
 import           GHC.Word
 import           System.Statgrab.Base
+import           System.Statgrab.Interface
 
 newtype Stats a = Stats { unwrap :: ReaderT (IORef Word) IO a }
     deriving (Applicative, Functor, Monad, MonadIO, MonadCatchIO)
@@ -84,12 +86,12 @@ async (Stats s) = Stats $ do
         atomicModifyIORef' ref $ \ n -> (succ n, ())
         Async.async $ runReaderT s ref `E.finally` destroy ref
 
--- | Retrieve statistics from the underlying operating system. Please see the
--- exported data types for a list of available statistics.
-inspect :: Info a => Stats a
-inspect = liftIO $ acquire >>= copy
+-- | Retrieve statistics from the underlying operating system, copying them to
+-- the Haskell heap and freeing the related 'Ptr a'.
+snapshot :: (Pointer (Struct a), Copy a) => Stats a
+snapshot = liftIO $ acquire >>= \ptr -> copy ptr <* release ptr
 
 destroy :: IORef Word -> IO ()
 destroy ref = do
     n <- atomicModifyIORef' ref $ \n -> (pred n, n)
-    when (n == 1) $ void sg_shutdown
+    when (n == 1) $ void (print "Shutting down..." >> sg_shutdown)

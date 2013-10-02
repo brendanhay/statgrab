@@ -44,6 +44,7 @@ library
 
     other-modules:
         System.Statgrab.Base
+      , System.Statgrab.Interface
 
     ghc-options:
         -Wall -O2 -rtsopts -funbox-strict-fields
@@ -51,7 +52,9 @@ library
     build-depends:
         async
       , base                      >= 4 && < 5
+      , bytestring
       , MonadCatchIO-transformers
+      , time
       , transformers
 
     extra-libraries:

@@ -54,7 +54,7 @@ import System.Statgrab
 
 main :: IO ()
 main = runStats $ do
-    h <- inspect :: Stats Host
+    h <- snapshot :: Stats Host
     liftIO $ print h
 ```
 
