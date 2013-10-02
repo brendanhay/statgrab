@@ -13,7 +13,7 @@
 -- Stability   : experimental
 -- Portability : non-portable (GHC extensions)
 
--- |
+-- | Direct bindings to the libstatgrab library.
 module System.Statgrab.Base where
 
 import Control.Applicative
