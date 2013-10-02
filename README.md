@@ -4,9 +4,9 @@
 
 * [Introduction](#introduction)
 * [Compatibility](#compatibility)
-* [Install](#install)
+* [Installation](#installation)
 * [Examples](#examples)
-* [Contribute](#contribute)
+* [Contributing](#contributing)
 * [Licence](#licence)
 
 
@@ -32,7 +32,7 @@ for more information.
 > TODO
 
 
-## Install
+## Installation
 
 > TODO
 
@@ -42,7 +42,7 @@ for more information.
 > TODO
 
 
-## Contribute
+## Contributing
 
 For any problems, comments or feedback please create an issue [here on GitHub](github.com/brendanhay/statgrab/issues).
 
