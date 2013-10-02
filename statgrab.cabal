@@ -1,6 +1,6 @@
 name:                  statgrab
 version:               0.1.0
-synopsis:              Collection of system level metrics and statistics
+synopsis:              Aggregation of system level metrics and statistics
 homepage:              http://github.com/brendanhay/statgrab
 license:               OtherLicense
 license-file:          LICENSE
