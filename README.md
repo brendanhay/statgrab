@@ -46,7 +46,17 @@ cabal install
 
 ## Examples
 
-> TODO
+```haskell
+module Main (main) where
+
+import Control.Monad.IO.Class
+import System.Statgrab
+
+main :: IO ()
+main = runStats $ do
+    h <- inspect :: Stats Host
+    liftIO $ print h
+```
 
 
 ## Contributing
