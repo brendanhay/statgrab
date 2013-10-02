@@ -11,7 +11,8 @@
 -- Stability   : experimental
 -- Portability : non-portable (GHC extensions)
 
--- |
+-- | Interface types for copying and unmarshalling libstatgrab structs into a
+-- more programmer friendly Haskell format.
 module System.Statgrab.Interface where
 
 import Control.Applicative
@@ -145,7 +146,6 @@ instance Copy Load where
              <@> load5
              <@> load15
              <@> loadSystime
-
 
 data User = User
     { userLoginName    :: !ByteString
