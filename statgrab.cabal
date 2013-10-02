@@ -41,7 +41,9 @@ library
 
     exposed-modules:
         System.Statgrab
-      , System.Statgrab.Base
+
+    other-modules:
+        System.Statgrab.Base
 
     ghc-options:
         -Wall -O2 -rtsopts -funbox-strict-fields
