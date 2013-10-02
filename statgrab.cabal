@@ -1,6 +1,6 @@
 name:                  statgrab
 version:               0.1.0
-synopsis:              Bindings to libstatgrab
+synopsis:              Collection of system level metrics and statistics
 homepage:              http://github.com/brendanhay/statgrab
 license:               OtherLicense
 license-file:          LICENSE
@@ -26,7 +26,7 @@ description:
     * libstatgrab @0.9.0@ must be installed on the target system.
     .
     * Be aware that currently these bindings have been developed and tested
-          only on OSX/Linux.
+      only on OSX/Linux.
 
 extra-source-files:
     README.md
