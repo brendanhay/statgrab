@@ -23,6 +23,10 @@ module System.Statgrab
     -- * Concurrency
     , async
 
+    -- * Type Classes
+    , Pointer          (..)
+    , Copy             (..)
+
     -- * Statistics
     , Host             (..)
     , CPU              (..)
