@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP                        #-}
+{-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE ForeignFunctionInterface   #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE RecordWildCards            #-}
@@ -17,46 +18,37 @@
 module System.Statgrab.Base where
 
 import Control.Applicative
-import Foreign
+import Control.Monad         (void)
+import Foreign               hiding (void)
 import Foreign.C.String
 import Foreign.C.Types
-import System.Statgrab.Types
 
 #include <statgrab.h>
 
 #let alignment t = "%lu", (unsigned long)offsetof(struct {char x__; t (y__); }, y__)
 
-data SErrorDetails
-data SHostInfo
-data SCpuStats
-data SCpuPercents
-data SMemStats
-data SLoadStats
-data SUserStats
-data SSwapStats
-data SFSStats
-data SDiskIOStats
-data SNetworkIOStats
-data SNetworkIFaceStats
-data SPageStats
-data SProcessStats
-data SProcessCount
+class Storable a => Info a where
+    acquire :: IO (Ptr a)
+    copy    :: Ptr a -> IO a
+    release :: Ptr a -> IO ()
 
-type ErrorDetailsPtr      = Ptr SErrorDetails
-type HostInfoPtr          = Ptr SHostInfo
-type CpuStatsPtr          = Ptr SCpuStats
-type CpuPercentsPtr       = Ptr SCpuPercents
-type MemStatsPtr          = Ptr SMemStats
-type LoadStatsPtr         = Ptr SLoadStats
-type UserStatsPtr         = Ptr SUserStats
-type SwapStatsPtr         = Ptr SSwapStats
-type FSStatsPtr           = Ptr SFSStats
-type DiskIOStatsPtr       = Ptr SDiskIOStats
-type NetworkIOStatsPtr    = Ptr SNetworkIOStats
-type NetworkIFaceStatsPtr = Ptr SNetworkIFaceStats
-type PageStatsPtr         = Ptr SPageStats
-type ProcessStatsPtr      = Ptr SProcessStats
-type ProcessCountPtr      = Ptr SProcessCount
+    copy ptr = peek ptr >>= \x -> release ptr >> return x
+
+type ErrorDetailsPtr      = Ptr ErrorDetails
+type HostInfoPtr          = Ptr HostInfo
+type CpuStatsPtr          = Ptr CpuStats
+type CpuPercentsPtr       = Ptr CpuPercents
+type MemStatsPtr          = Ptr MemStats
+type LoadStatsPtr         = Ptr LoadStats
+type UserStatsPtr         = Ptr UserStats
+type SwapStatsPtr         = Ptr SwapStats
+type FSStatsPtr           = Ptr FSStats
+type DiskIOStatsPtr       = Ptr DiskIOStats
+type NetworkIOStatsPtr    = Ptr NetworkIOStats
+type NetworkIFaceStatsPtr = Ptr NetworkIFaceStats
+type PageStatsPtr         = Ptr PageStats
+type ProcessStatsPtr      = Ptr ProcessStats
+type ProcessCountPtr      = Ptr ProcessCount
 
 type Entries = Ptr CSize
 
@@ -127,13 +119,13 @@ foreign import ccall safe "statgrab.h sg_get_error_errno"
      sg_get_error_errno :: IO CInt
 
 foreign import ccall safe "statgrab.h sg_get_error_details"
-     sg_get_error_details :: Ptr ErrorDetails -> IO Error
+     sg_get_error_details :: ErrorDetailsPtr -> IO Error
 
 foreign import ccall safe "statgrab.h sg_str_error"
      sg_str_error :: Error -> IO CString
 
 foreign import ccall safe "statgrab.h sg_strperror"
-     sg_strperror :: Ptr CString -> Ptr ErrorDetails -> IO CString
+     sg_strperror :: Ptr CString -> ErrorDetailsPtr -> IO CString
 
 foreign import ccall safe "statgrab.h sg_init"
      sg_init :: CInt -> IO Error
@@ -218,10 +210,14 @@ foreign import ccall safe "statgrab.h sg_get_host_info"
     sg_get_host_info :: Entries -> IO HostInfoPtr
 
 foreign import ccall safe "statgrab.h sg_get_host_info_r"
-    sg_get_host_info_ :: Entries -> IO HostInfoPtr
+    sg_get_host_info_r :: Entries -> IO HostInfoPtr
 
-foreign import ccall safe "statgrab.h sg_free_host_info"
+foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_host_info :: HostInfoPtr -> IO Error
+
+instance Info HostInfo where
+    acquire = alloca sg_get_host_info
+    release = void . sg_free_host_info
 
 data CpuStats = CpuStats
     { cpuUser                   :: {-# UNPACK #-} !CLLong
@@ -277,19 +273,21 @@ instance Storable CpuStats where
         #{poke sg_cpu_stats, systime} p cpuSystime
 
 foreign import ccall safe "statgrab.h sg_get_cpu_stats"
-    sg_get_cpu_stats :: Entries -> IO (Ptr CpuStats)
+    sg_get_cpu_stats :: Entries -> IO CpuStatsPtr
 
 foreign import ccall safe "statgrab.h sg_get_cpu_stats_diff"
-    sg_get_cpu_stats_diff :: Entries -> IO (Ptr CpuStats)
+    sg_get_cpu_stats_diff :: Entries -> IO CpuStatsPtr
 
 foreign import ccall safe "statgrab.h sg_get_cpu_stats_r"
-    sg_get_cpu_stats_r :: Entries -> IO (Ptr CpuStats)
+    sg_get_cpu_stats_r :: Entries -> IO CpuStatsPtr
 
 foreign import ccall safe "statgrab.h sg_get_cpu_stats_diff_between"
-    sg_get_cpu_stats_diff_between ::
-        Ptr CpuStats -> Ptr CpuStats -> Entries -> IO (Ptr CpuStats)
+    sg_get_cpu_stats_diff_between :: Ptr CpuStats
+                                  -> Ptr CpuStats
+                                  -> Entries
+                                  -> IO CpuStatsPtr
 
-foreign import ccall safe "statgrab.h sg_free_cpu_stats"
+foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_cpu_stats :: Ptr () -> IO Error
 
 data CpuPercents = CpuPercents
@@ -334,12 +332,12 @@ newtype CpuPercentSource = CpuPercentSource { unCpuPercentSource :: CInt }
 }
 
 foreign import ccall safe "statgrab.h sg_get_cpu_percents_of"
-    sg_get_cpu_percents_of :: CpuPercentSource -> Entries -> IO (Ptr CpuPercents)
+    sg_get_cpu_percents_of :: CpuPercentSource -> Entries -> IO CpuPercentsPtr
 
 foreign import ccall safe "statgrab.h sg_get_cpu_percents_r"
-    sg_get_cpu_percents_r :: Ptr CpuStats -> Entries -> IO (Ptr CpuPercents)
+    sg_get_cpu_percents_r :: Ptr CpuStats -> Entries -> IO CpuPercentsPtr
 
-foreign import ccall safe "statgrab.h sg_free_cpu_percents"
+foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_cpu_percents :: Ptr () -> IO Error
 
 data MemStats = MemStats
@@ -368,12 +366,12 @@ instance Storable MemStats where
         #{poke sg_mem_stats, systime} p memSystime
 
 foreign import ccall safe "statgrab.h sg_get_mem_stats"
-    sg_get_mem_stats :: Entries -> IO (Ptr MemStats)
+    sg_get_mem_stats :: Entries -> IO MemStatsPtr
 
 foreign import ccall safe "statgrab.h sg_get_mem_stats_r"
-    sg_get_mem_stats_r :: Entries -> IO (Ptr MemStats)
+    sg_get_mem_stats_r :: Entries -> IO MemStatsPtr
 
-foreign import ccall safe "statgrab.h sg_free_mem_stats"
+foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_mem_stats :: Ptr () -> IO Error
 
 data LoadStats = LoadStats
@@ -400,12 +398,12 @@ instance Storable LoadStats where
         #{poke sg_load_stats, systime} p loadSystime
 
 foreign import ccall safe "statgrab.h sg_get_load_stats"
-    sg_get_load_stats :: Entries -> IO (Ptr LoadStats)
+    sg_get_load_stats :: Entries -> IO LoadStatsPtr
 
 foreign import ccall safe "statgrab.h sg_get_load_stats_r"
-    sg_get_load_stats_r :: Entries -> IO (Ptr LoadStats)
+    sg_get_load_stats_r :: Entries -> IO LoadStatsPtr
 
-foreign import ccall safe "statgrab.h sg_free_load_stats"
+foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_load_stats :: Ptr () -> IO Error
 
 data UserStats = UserStats
@@ -444,12 +442,12 @@ instance Storable UserStats where
         #{poke sg_user_stats, systime} p userSystime
 
 foreign import ccall safe "statgrab.h sg_get_user_stats"
-    sg_get_user_stats :: Entries -> IO (Ptr UserStats)
+    sg_get_user_stats :: Entries -> IO UserStatsPtr
 
 foreign import ccall safe "statgrab.h sg_get_user_stats_r"
-    sg_get_user_stats_r :: Entries -> IO (Ptr UserStats)
+    sg_get_user_stats_r :: Entries -> IO UserStatsPtr
 
-foreign import ccall safe "statgrab.h sg_free_user_stats"
+foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_user_stats :: Ptr () -> IO Error
 
 data SwapStats = SwapStats
@@ -476,12 +474,12 @@ instance Storable SwapStats where
         #{poke sg_swap_stats, systime} p swapSystime
 
 foreign import ccall safe "statgrab.h sg_get_swap_stats"
-    sg_get_swap_stats :: Entries -> IO (Ptr SwapStats)
+    sg_get_swap_stats :: Entries -> IO SwapStatsPtr
 
 foreign import ccall safe "statgrab.h sg_get_swap_stats_r"
-    sg_get_swap_stats_r :: Entries -> IO (Ptr SwapStats)
+    sg_get_swap_stats_r :: Entries -> IO SwapStatsPtr
 
-foreign import ccall safe "statgrab.h sg_free_swap_stats"
+foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_swap_stats :: Ptr () -> IO Error
 
 newtype DeviceType = DeviceType { unDeviceType :: CInt }
@@ -574,19 +572,19 @@ foreign import ccall safe "statgrab.h sg_get_valid_filesystems"
 -- __sg_public sg_error sg_set_valid_filesystems(const char *valid_fs[]);
 
 foreign import ccall safe "statgrab.h sg_get_fs_stats"
-     sg_get_fs_stats :: Entries -> IO (Ptr FSStats)
+     sg_get_fs_stats :: Entries -> IO FSStatsPtr
 
 foreign import ccall safe "statgrab.h sg_get_fs_stats_r"
-     sg_get_fs_stats_r :: Entries -> IO (Ptr FSStats)
+     sg_get_fs_stats_r :: Entries -> IO FSStatsPtr
 
 foreign import ccall safe "statgrab.h sg_get_fs_stats_diff"
-     sg_get_fs_stats_diff :: Entries -> IO (Ptr FSStats)
+     sg_get_fs_stats_diff :: Entries -> IO FSStatsPtr
 
 foreign import ccall safe "statgrab.h sg_get_fs_stats_diff_between"
      sg_get_fs_stats_diff_between :: Ptr FSStats
                                   -> Ptr FSStats
                                   -> Entries
-                                  -> IO (Ptr FSStats)
+                                  -> IO FSStatsPtr
 
 foreign import ccall safe "statgrab.h sg_fs_compare_device_name"
      sg_fs_compare_device_name :: Ptr () -> Ptr () -> IO CInt
@@ -594,7 +592,7 @@ foreign import ccall safe "statgrab.h sg_fs_compare_device_name"
 foreign import ccall safe "statgrab.h sg_fs_compare_mnt_point"
      sg_fs_compare_mnt_point :: Ptr () -> Ptr () -> IO CInt
 
-foreign import ccall safe "statgrab.h sg_free_fs_stats"
+foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_fs_stats :: Ptr () -> IO Error
 
 data DiskIOStats = DiskIOStats
@@ -621,19 +619,19 @@ instance Storable DiskIOStats where
         #{poke sg_disk_io_stats, systime} p diskSystime
 
 foreign import ccall safe "statgrab.h sg_get_disk_io_stats"
-    sg_get_disk_io_stats :: Entries -> IO (Ptr DiskIOStats)
+    sg_get_disk_io_stats :: Entries -> IO DiskIOStatsPtr
 
 foreign import ccall safe "statgrab.h sg_get_disk_io_stats_r"
-    sg_get_disk_io_stats_r :: Entries -> IO (Ptr DiskIOStats)
+    sg_get_disk_io_stats_r :: Entries -> IO DiskIOStatsPtr
 
 foreign import ccall safe "statgrab.h sg_get_disk_io_stats_diff"
-    sg_get_disk_io_stats_diff :: Entries -> IO (Ptr DiskIOStats)
+    sg_get_disk_io_stats_diff :: Entries -> IO DiskIOStatsPtr
 
 foreign import ccall safe "statgrab.h sg_get_disk_io_stats_diff_between"
-    sg_get_disk_io_stats_diff_between :: Ptr DiskIOStats
-                                      -> Ptr DiskIOStats
+    sg_get_disk_io_stats_diff_between :: DiskIOStatsPtr
+                                      -> DiskIOStatsPtr
                                       -> Entries
-                                      -> IO (Ptr DiskIOStats)
+                                      -> IO DiskIOStatsPtr
 
 foreign import ccall safe "statgrab.h sg_disk_io_compare_name"
     sg_disk_io_compare_name :: Ptr () -> Ptr () -> IO CInt
@@ -641,7 +639,7 @@ foreign import ccall safe "statgrab.h sg_disk_io_compare_name"
 foreign import ccall safe "statgrab.h sg_disk_io_compare_traffic"
     sg_disk_io_compare_traffic :: Ptr () -> Ptr () -> IO CInt
 
-foreign import ccall safe "statgrab.h sg_free_disk_io_stats"
+foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_disk_io_stats :: Ptr () -> IO Error
 
 data NetworkIOStats = NetworkIOStats
@@ -683,24 +681,24 @@ instance Storable NetworkIOStats where
         #{poke sg_network_io_stats, systime} p ifaceSystem
 
 foreign import ccall safe "statgrab.h sg_get_network_io_stats"
-     sg_get_network_io_stats :: Entries -> IO (Ptr NetworkIOStats)
+     sg_get_network_io_stats :: Entries -> IO NetworkIOStatsPtr
 
 foreign import ccall safe "statgrab.h sg_get_network_io_stats_r"
-     sg_get_network_io_stats_r :: Entries -> IO (Ptr NetworkIOStats)
+     sg_get_network_io_stats_r :: Entries -> IO NetworkIOStatsPtr
 
 foreign import ccall safe "statgrab.h sg_get_network_io_stats_diff"
-     sg_get_network_io_stats_diff :: Entries -> IO (Ptr NetworkIOStats)
+     sg_get_network_io_stats_diff :: Entries -> IO NetworkIOStatsPtr
 
 foreign import ccall safe "statgrab.h sg_get_network_io_stats_diff_between"
-     sg_get_network_io_stats_diff_between :: Ptr NetworkIOStats
-                                          -> Ptr NetworkIOStats
+     sg_get_network_io_stats_diff_between :: NetworkIOStatsPtr
+                                          -> NetworkIOStatsPtr
                                           -> Entries
-                                          -> IO (Ptr NetworkIOStats)
+                                          -> IO NetworkIOStatsPtr
 
 foreign import ccall safe "statgrab.h sg_network_io_compare_name"
      sg_network_io_compare_name :: Ptr () -> Ptr () -> IO (CInt)
 
-foreign import ccall safe "statgrab.h sg_free_network_io_stats"
+foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_network_io_stats :: Ptr () -> IO Error
 
 newtype Duplex = Duplex { unDuplex :: CInt }
@@ -750,15 +748,15 @@ instance Storable NetworkIFaceStats where
         #{poke sg_network_iface_stats, systime} p ifaceSystime
 
 foreign import ccall safe "statgrab.h sg_get_network_iface_stats"
-    sg_get_network_iface_stats :: Entries -> IO (Ptr NetworkIFaceStats)
+    sg_get_network_iface_stats :: Entries -> IO NetworkIFaceStatsPtr
 
 foreign import ccall safe "statgrab.h sg_get_network_iface_stats_r"
-    sg_get_network_iface_stats_r :: Entries -> IO (Ptr NetworkIFaceStats)
+    sg_get_network_iface_stats_r :: Entries -> IO NetworkIFaceStatsPtr
 
 foreign import ccall safe "statgrab.h sg_network_iface_compare_name"
     sg_network_iface_compare_name :: Ptr () -> Ptr () -> IO CInt
 
-foreign import ccall safe "statgrab.h sg_free_network_iface_stats"
+foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_network_iface_stats :: Ptr () -> IO Error
 
 data PageStats = PageStats
@@ -782,21 +780,21 @@ instance Storable PageStats where
         #{poke sg_page_stats, systime} p pagesSysTime
 
 foreign import ccall safe "statgrab.h sg_get_page_stats"
-     sg_get_page_stats :: Entries -> IO (Ptr PageStats)
+     sg_get_page_stats :: Entries -> IO PageStatsPtr
 
 foreign import ccall safe "statgrab.h sg_get_page_stats_r"
-     sg_get_page_stats_r :: Entries -> IO (Ptr PageStats)
+     sg_get_page_stats_r :: Entries -> IO PageStatsPtr
 
 foreign import ccall safe "statgrab.h sg_get_page_stats_diff"
-     sg_get_page_stats_diff :: Entries -> IO (Ptr PageStats)
+     sg_get_page_stats_diff :: Entries -> IO PageStatsPtr
 
 foreign import ccall safe "statgrab.h sg_get_page_stats_diff_between"
-     sg_get_page_stats_diff_between :: Ptr PageStats
-                                    -> Ptr PageStats
+     sg_get_page_stats_diff_between :: PageStatsPtr
+                                    -> PageStatsPtr
                                     -> Entries
-                                    -> IO (Ptr PageStats)
+                                    -> IO PageStatsPtr
 
-foreign import ccall safe "statgrab.h sg_free_page_stats"
+foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_page_stats :: Ptr () -> IO Error
 
 newtype ProcessState = ProcessState { processState :: CInt }
@@ -914,7 +912,7 @@ foreign import ccall safe "statgrab.h sg_process_compare_cpu"
 foreign import ccall safe "statgrab.h sg_process_compare_time"
     sg_process_compare_time :: Ptr () -> Ptr () -> IO CInt
 
-foreign import ccall safe "statgrab.h sg_free_process_stats"
+foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_process_stats :: ProcessStatsPtr -> IO Error
 
 newtype Source = Source { unSource :: CInt }
@@ -963,5 +961,5 @@ foreign import ccall safe "statgrab.h sg_get_process_count_of"
 foreign import ccall safe "statgrab.h sg_get_process_count_r"
     sg_get_process_count_r :: ProcessStatsPtr -> IO ProcessCountPtr
 
-foreign import ccall safe "statgrab.h sg_free_process_count"
+foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_process_count :: ProcessCountPtr -> IO Error

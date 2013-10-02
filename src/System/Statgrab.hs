@@ -24,70 +24,27 @@ import           Control.Monad.Trans.Reader
 import           Data.IORef
 import           GHC.Word
 import           System.Statgrab.Base
-import           System.Statgrab.Types
 
 newtype Stats a = Stats { unwrap :: ReaderT (IORef Word) IO a }
-    deriving (Applicative, Functor, Monad, MonadIO, MonadCatchIO, MonadPlus)
+    deriving (Applicative, Functor, Monad, MonadIO, MonadCatchIO)
 
-instance Alternative Stats where
-    empty = Stats mzero
-    (<|>) = mplus
+runStats :: MonadCatchIO m => Stats a -> m a
+runStats = liftIO
+    . bracket (sg_init 0 >> newIORef 1) destroy
+    . runReaderT
+    . unwrap
 
--- runStats :: MonadCatchIO m => Stats a -> m a
--- runStats = liftIO
---     . bracket (sg_init >> newIORef 1) destroy
---     . runReaderT
---     . unwrap
+async :: Stats a -> Stats (Async a)
+async (Stats s) = Stats $ do
+    ref <- ask
+    liftIO $ do
+        atomicModifyIORef' ref $ \ n -> (succ n, ())
+        Async.async $ runReaderT s ref `E.finally` destroy ref
 
--- async :: Stats a -> Stats (Async a)
--- async (Stats s) = Stats $ do
---     ref <- ask
---     liftIO $ do
---         atomicModifyIORef' ref $ \ n -> (succ n, ())
---         Async.async $ runReaderT s ref `E.finally` destroy ref
+inspect :: Info a => Stats a
+inspect = liftIO $ acquire >>= copy
 
-
--- --
--- -- Internal
--- --
-
--- destroy :: IORef Word -> IO ()
--- destroy ref = do
---     n <- atomicModifyIORef' ref $ \n -> (pred n, n)
---     when (n == 1) $ void sg_shutdown
-
--- -- host :: Stats Host
-
--- -- cpu :: Stats Cpu
-
--- -- -- cpuDiff
-
--- -- percentages :: Stats Percentages
-
--- -- memory
-
--- -- load
-
--- -- user
-
--- -- swap
-
--- -- disk
-
--- -- diskIO
-
--- -- -- diskIODiff
-
--- -- network
-
--- -- networkIO
-
--- -- -- networkIODiff
-
--- -- page
-
--- -- -- pageDiff
-
--- -- process
-
--- -- processCount
+destroy :: IORef Word -> IO ()
+destroy ref = do
+    n <- atomicModifyIORef' ref $ \n -> (pred n, n)
+    when (n == 1) $ void sg_shutdown
