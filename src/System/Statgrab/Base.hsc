@@ -701,19 +701,19 @@ foreign import ccall safe "statgrab.h sg_network_io_compare_name"
 foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_network_io_stats :: Ptr () -> IO Error
 
-newtype Duplex = Duplex { unDuplex :: CInt }
+newtype InterfaceMode = InterfaceMode { unMode :: CInt }
     deriving (Eq, Ord, Storable)
 
-#{enum Duplex, Duplex
+#{enum InterfaceMode, InterfaceMode
     , duplexFull    = SG_IFACE_DUPLEX_FULL
     , duplexHalf    = SG_IFACE_DUPLEX_HALF
     , duplexUnknown = SG_IFACE_DUPLEX_UNKNOWN
 }
 
-newtype Status = Status { unStatus :: CInt }
+newtype InterfaceStatus = InterfaceStatus { unStatus :: CInt }
     deriving (Eq, Ord, Storable)
 
-#{enum Status, Status
+#{enum InterfaceStatus, InterfaceStatus
     , statusDown = SG_IFACE_DOWN
     , statusUp   = SG_IFACE_UP
 }
@@ -722,8 +722,8 @@ data NetworkInterface = NetworkInterface
     { ifaceName    :: {-# UNPACK #-} !CString
     , ifaceSpeed   :: {-# UNPACK #-} !CULLong
     , ifaceFactor  :: {-# UNPACK #-} !CULLong
-    , ifaceDuplex  :: {-# UNPACK #-} !Duplex
-    , ifaceUp      :: {-# UNPACK #-} !Status
+    , ifaceDuplex  :: {-# UNPACK #-} !InterfaceMode
+    , ifaceUp      :: {-# UNPACK #-} !InterfaceStatus
     , ifaceSystime :: {-# UNPACK #-} !CTime
     }
 
@@ -915,10 +915,10 @@ foreign import ccall safe "statgrab.h sg_process_compare_time"
 foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_process_stats :: ProcessPtr -> IO Error
 
-newtype Source = Source { unSource :: CInt }
+newtype ProcessSource = ProcessSource { unSource :: CInt }
     deriving (Eq, Show)
 
-#{enum Source, Source
+#{enum ProcessSource, ProcessSource
     , sourceEntire = sg_entire_process_count
     , sourceLast   = sg_last_process_count
 }
@@ -956,7 +956,7 @@ instance Storable ProcessCount where
         #{poke sg_process_count, systime} p countSystime
 
 foreign import ccall safe "statgrab.h sg_get_process_count_of"
-    sg_get_process_count_of :: Source -> IO ProcessCountPtr
+    sg_get_process_count_of :: ProcessSource -> IO ProcessCountPtr
 
 foreign import ccall safe "statgrab.h sg_get_process_count_r"
     sg_get_process_count_r :: ProcessPtr -> IO ProcessCountPtr

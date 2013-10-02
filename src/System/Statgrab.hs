@@ -13,9 +13,9 @@
 -- | Monadic context and data types for managing the underlying libstatgrab FFI calls
 -- with transparent resource allocation and deallocation.
 module System.Statgrab
-    ( Stats
-
+    (
     -- * Operations on the @Stats@ Monad
+      Stats
     , runStats
     , inspect
 
@@ -23,27 +23,37 @@ module System.Statgrab
     , async
 
     -- * Statistics
-    , Host
-    , CPU
-    , CPUPercent
-    , Memory
-    , Load
-    , User
-    , Swap
-    , FileSystem
-    , DiskIO
-    , NetworkIO
-    , NetworkInterface
-    , Page
-    , Process
-    , ProcessCount
+    , Host             (..)
+    , CPU              (..)
+    , CPUPercent       (..)
+    , Memory           (..)
+    , Load             (..)
+    , User             (..)
+    , Swap             (..)
+    , FileSystem       (..)
+    , DiskIO           (..)
+    , NetworkIO        (..)
+    , NetworkInterface (..)
+    , Page             (..)
+    , Process          (..)
+    , ProcessCount     (..)
 
     -- * Enums
-    , CPUPercentSource
+    , HostState        (..)
+    , CPUPercentSource (..)
+    , DeviceType       (..)
+    , InterfaceMode    (..)
+    , InterfaceStatus  (..)
+    , ProcessState     (..)
+    , ProcessSource    (..)
+
+    -- * Re-exported
+    , Async
+    , wait
     ) where
 
 import           Control.Applicative
-import           Control.Concurrent.Async   (Async)
+import           Control.Concurrent.Async   (Async, wait)
 import qualified Control.Concurrent.Async   as Async
 import qualified Control.Exception          as E
 import           Control.Monad
