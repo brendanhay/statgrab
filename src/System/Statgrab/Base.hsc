@@ -26,6 +26,38 @@ import System.Statgrab.Types
 
 #let alignment t = "%lu", (unsigned long)offsetof(struct {char x__; t (y__); }, y__)
 
+data SErrorDetails
+data SHostInfo
+data SCpuStats
+data SCpuPercents
+data SMemStats
+data SLoadStats
+data SUserStats
+data SSwapStats
+data SFSStats
+data SDiskIOStats
+data SNetworkIOStats
+data SNetworkIFaceStats
+data SPageStats
+data SProcessStats
+data SProcessCount
+
+type ErrorDetailsPtr      = Ptr SErrorDetails
+type HostInfoPtr          = Ptr SHostInfo
+type CpuStatsPtr          = Ptr SCpuStats
+type CpuPercentsPtr       = Ptr SCpuPercents
+type MemStatsPtr          = Ptr SMemStats
+type LoadStatsPtr         = Ptr SLoadStats
+type UserStatsPtr         = Ptr SUserStats
+type SwapStatsPtr         = Ptr SSwapStats
+type FSStatsPtr           = Ptr SFSStats
+type DiskIOStatsPtr       = Ptr SDiskIOStats
+type NetworkIOStatsPtr    = Ptr SNetworkIOStats
+type NetworkIFaceStatsPtr = Ptr SNetworkIFaceStats
+type PageStatsPtr         = Ptr SPageStats
+type ProcessStatsPtr      = Ptr SProcessStats
+type ProcessCountPtr      = Ptr SProcessCount
+
 type Entries = Ptr CSize
 
 newtype Error = Error { unError :: CInt }
@@ -127,48 +159,6 @@ foreign import ccall safe "statgrab.h sg_lock_mutex"
 foreign import ccall safe "statgrab.h sg_unlock_mutex"
      sg_unlock_mutex :: CString -> IO Error
 
-foreign import ccall safe "statgrab.h sg_free_host_info"
-    sg_free_host_info :: Ptr () -> IO Error
-
-foreign import ccall safe "statgrab.h sg_free_cpu_stats"
-    sg_free_cpu_stats :: Ptr () -> IO Error
-
-foreign import ccall safe "statgrab.h sg_free_cpu_percents"
-    sg_free_cpu_percents :: Ptr () -> IO Error
-
-foreign import ccall safe "statgrab.h sg_free_mem_stats"
-    sg_free_mem_stats :: Ptr () -> IO Error
-
-foreign import ccall safe "statgrab.h sg_free_load_stats"
-    sg_free_load_stats :: Ptr () -> IO Error
-
-foreign import ccall safe "statgrab.h sg_free_user_stats"
-    sg_free_user_stats :: Ptr () -> IO Error
-
-foreign import ccall safe "statgrab.h sg_free_swap_stats"
-    sg_free_swap_stats :: Ptr () -> IO Error
-
-foreign import ccall safe "statgrab.h sg_free_fs_stats"
-    sg_free_fs_stats :: Ptr () -> IO Error
-
-foreign import ccall safe "statgrab.h sg_free_disk_io_stats"
-    sg_free_disk_io_stats :: Ptr () -> IO Error
-
-foreign import ccall safe "statgrab.h sg_free_network_io_stats"
-    sg_free_network_io_stats :: Ptr () -> IO Error
-
-foreign import ccall safe "statgrab.h sg_free_network_iface_stats"
-    sg_free_network_iface_stats :: Ptr () -> IO Error
-
-foreign import ccall safe "statgrab.h sg_free_page_stats"
-    sg_free_page_stats :: Ptr () -> IO Error
-
-foreign import ccall safe "statgrab.h sg_free_process_stats"
-    sg_free_process_stats :: Ptr () -> IO Error
-
-foreign import ccall safe "statgrab.h sg_free_process_count"
-    sg_free_process_count :: Ptr () -> IO Error
-
 newtype HostState = HostState { unHostState :: CInt }
     deriving (Eq, Show, Storable)
 
@@ -225,10 +215,13 @@ instance Storable HostInfo where
         #{poke sg_host_info, systime} p hostSystime
 
 foreign import ccall safe "statgrab.h sg_get_host_info"
-    sg_get_host_info :: Entries -> IO (Ptr HostInfo)
+    sg_get_host_info :: Entries -> IO HostInfoPtr
 
 foreign import ccall safe "statgrab.h sg_get_host_info_r"
-    sg_get_host_info_ :: Entries -> IO (Ptr HostInfo)
+    sg_get_host_info_ :: Entries -> IO HostInfoPtr
+
+foreign import ccall safe "statgrab.h sg_free_host_info"
+    sg_free_host_info :: HostInfoPtr -> IO Error
 
 data CpuStats = CpuStats
     { cpuUser                   :: {-# UNPACK #-} !CLLong
@@ -296,6 +289,9 @@ foreign import ccall safe "statgrab.h sg_get_cpu_stats_diff_between"
     sg_get_cpu_stats_diff_between ::
         Ptr CpuStats -> Ptr CpuStats -> Entries -> IO (Ptr CpuStats)
 
+foreign import ccall safe "statgrab.h sg_free_cpu_stats"
+    sg_free_cpu_stats :: Ptr () -> IO Error
+
 data CpuPercents = CpuPercents
     { cpuPctUser      :: {-# UNPACK #-} !CDouble
     , cpuPctKernel    :: {-# UNPACK #-} !CDouble
@@ -343,6 +339,9 @@ foreign import ccall safe "statgrab.h sg_get_cpu_percents_of"
 foreign import ccall safe "statgrab.h sg_get_cpu_percents_r"
     sg_get_cpu_percents_r :: Ptr CpuStats -> Entries -> IO (Ptr CpuPercents)
 
+foreign import ccall safe "statgrab.h sg_free_cpu_percents"
+    sg_free_cpu_percents :: Ptr () -> IO Error
+
 data MemStats = MemStats
     { memTotal   :: {-# UNPACK #-} !CULLong
     , memFree    :: {-# UNPACK #-} !CULLong
@@ -374,6 +373,9 @@ foreign import ccall safe "statgrab.h sg_get_mem_stats"
 foreign import ccall safe "statgrab.h sg_get_mem_stats_r"
     sg_get_mem_stats_r :: Entries -> IO (Ptr MemStats)
 
+foreign import ccall safe "statgrab.h sg_free_mem_stats"
+    sg_free_mem_stats :: Ptr () -> IO Error
+
 data LoadStats = LoadStats
     { load1       :: {-# UNPACK #-} !CDouble
     , load5       :: {-# UNPACK #-} !CDouble
@@ -402,6 +404,9 @@ foreign import ccall safe "statgrab.h sg_get_load_stats"
 
 foreign import ccall safe "statgrab.h sg_get_load_stats_r"
     sg_get_load_stats_r :: Entries -> IO (Ptr LoadStats)
+
+foreign import ccall safe "statgrab.h sg_free_load_stats"
+    sg_free_load_stats :: Ptr () -> IO Error
 
 data UserStats = UserStats
     { userLoginName    :: {-# UNPACK #-} !CString
@@ -444,6 +449,9 @@ foreign import ccall safe "statgrab.h sg_get_user_stats"
 foreign import ccall safe "statgrab.h sg_get_user_stats_r"
     sg_get_user_stats_r :: Entries -> IO (Ptr UserStats)
 
+foreign import ccall safe "statgrab.h sg_free_user_stats"
+    sg_free_user_stats :: Ptr () -> IO Error
+
 data SwapStats = SwapStats
     { swapTotal   :: {-# UNPACK #-} !CULLong
     , swapUsed    :: {-# UNPACK #-} !CULLong
@@ -472,6 +480,9 @@ foreign import ccall safe "statgrab.h sg_get_swap_stats"
 
 foreign import ccall safe "statgrab.h sg_get_swap_stats_r"
     sg_get_swap_stats_r :: Entries -> IO (Ptr SwapStats)
+
+foreign import ccall safe "statgrab.h sg_free_swap_stats"
+    sg_free_swap_stats :: Ptr () -> IO Error
 
 newtype DeviceType = DeviceType { unDeviceType :: CInt }
     deriving (Eq, Show, Storable)
@@ -583,6 +594,9 @@ foreign import ccall safe "statgrab.h sg_fs_compare_device_name"
 foreign import ccall safe "statgrab.h sg_fs_compare_mnt_point"
      sg_fs_compare_mnt_point :: Ptr () -> Ptr () -> IO CInt
 
+foreign import ccall safe "statgrab.h sg_free_fs_stats"
+    sg_free_fs_stats :: Ptr () -> IO Error
+
 data DiskIOStats = DiskIOStats
     { diskName    :: {-# UNPACK #-} !CString
     , diskRead    :: {-# UNPACK #-} !CULLong
@@ -626,6 +640,9 @@ foreign import ccall safe "statgrab.h sg_disk_io_compare_name"
 
 foreign import ccall safe "statgrab.h sg_disk_io_compare_traffic"
     sg_disk_io_compare_traffic :: Ptr () -> Ptr () -> IO CInt
+
+foreign import ccall safe "statgrab.h sg_free_disk_io_stats"
+    sg_free_disk_io_stats :: Ptr () -> IO Error
 
 data NetworkIOStats = NetworkIOStats
     { ifaceIOName     :: {-# UNPACK #-} !CString
@@ -683,6 +700,9 @@ foreign import ccall safe "statgrab.h sg_get_network_io_stats_diff_between"
 foreign import ccall safe "statgrab.h sg_network_io_compare_name"
      sg_network_io_compare_name :: Ptr () -> Ptr () -> IO (CInt)
 
+foreign import ccall safe "statgrab.h sg_free_network_io_stats"
+    sg_free_network_io_stats :: Ptr () -> IO Error
+
 newtype Duplex = Duplex { unDuplex :: CInt }
     deriving (Eq, Ord, Storable)
 
@@ -738,6 +758,9 @@ foreign import ccall safe "statgrab.h sg_get_network_iface_stats_r"
 foreign import ccall safe "statgrab.h sg_network_iface_compare_name"
     sg_network_iface_compare_name :: Ptr () -> Ptr () -> IO CInt
 
+foreign import ccall safe "statgrab.h sg_free_network_iface_stats"
+    sg_free_network_iface_stats :: Ptr () -> IO Error
+
 data PageStats = PageStats
     { pagesIn      :: {-# UNPACK #-} !CULLong
     , pagesOut     :: {-# UNPACK #-} !CULLong
@@ -773,6 +796,9 @@ foreign import ccall safe "statgrab.h sg_get_page_stats_diff_between"
                                     -> Entries
                                     -> IO (Ptr PageStats)
 
+foreign import ccall safe "statgrab.h sg_free_page_stats"
+    sg_free_page_stats :: Ptr () -> IO Error
+
 newtype ProcessState = ProcessState { processState :: CInt }
     deriving (Eq, Ord, Storable)
 
@@ -785,27 +811,27 @@ newtype ProcessState = ProcessState { processState :: CInt }
 }
 
 data ProcessStats = ProcessStats
-    { procName                   :: {-# UNPACK #-} !CString
-    , procTitle                  :: {-# UNPACK #-} !CString
-    , procPid                    :: {-# UNPACK #-} !CInt
-    , procParent                 :: {-# UNPACK #-} !CInt
-    , procPGid                   :: {-# UNPACK #-} !CInt
-    , procSessId                 :: {-# UNPACK #-} !CInt
-    , procUid                    :: {-# UNPACK #-} !CUInt
-    , procEUid                   :: {-# UNPACK #-} !CUInt
-    , procGid                    :: {-# UNPACK #-} !CUInt
-    , procEGid                   :: {-# UNPACK #-} !CUInt
-    , procCtxSwitches            :: {-# UNPACK #-} !CULLong
-    , procVoluntaryCtxSwitches   :: {-# UNPACK #-} !CULLong
-    , procInvoluntaryCtxSwitches :: {-# UNPACK #-} !CULLong
-    , procSize                   :: {-# UNPACK #-} !CULLong
-    , procResident               :: {-# UNPACK #-} !CULLong
-    , procStart                  :: {-# UNPACK #-} !CTime
-    , procSpent                  :: {-# UNPACK #-} !CTime
-    , procCpuPercent             :: {-# UNPACK #-} !CDouble
-    , procNice                   :: {-# UNPACK #-} !CInt
-    , procState                  :: {-# UNPACK #-} !ProcessState
-    , procSystime                :: {-# UNPACK #-} !CTime
+    { procName        :: {-# UNPACK #-} !CString
+    , procTitle       :: {-# UNPACK #-} !CString
+    , procPid         :: {-# UNPACK #-} !CInt
+    , procParent      :: {-# UNPACK #-} !CInt
+    , procPGid        :: {-# UNPACK #-} !CInt
+    , procSessId      :: {-# UNPACK #-} !CInt
+    , procUid         :: {-# UNPACK #-} !CUInt
+    , procEUid        :: {-# UNPACK #-} !CUInt
+    , procGid         :: {-# UNPACK #-} !CUInt
+    , procEGid        :: {-# UNPACK #-} !CUInt
+    , procSwitches    :: {-# UNPACK #-} !CULLong
+    , procVoluntary   :: {-# UNPACK #-} !CULLong
+    , procInvoluntary :: {-# UNPACK #-} !CULLong
+    , procSize        :: {-# UNPACK #-} !CULLong
+    , procResident    :: {-# UNPACK #-} !CULLong
+    , procStart       :: {-# UNPACK #-} !CTime
+    , procSpent       :: {-# UNPACK #-} !CTime
+    , procCpuPercent  :: {-# UNPACK #-} !CDouble
+    , procNice        :: {-# UNPACK #-} !CInt
+    , procState       :: {-# UNPACK #-} !ProcessState
+    , procSystime     :: {-# UNPACK #-} !CTime
     }
 
 instance Storable ProcessStats where
@@ -818,16 +844,22 @@ instance Storable ProcessStats where
         <*> #{peek sg_process_stats, pid} p
         <*> #{peek sg_process_stats, parent} p
         <*> #{peek sg_process_stats, pgid} p
+        <*> #{peek sg_process_stats, sessid} p
         <*> #{peek sg_process_stats, uid} p
         <*> #{peek sg_process_stats, euid} p
         <*> #{peek sg_process_stats, gid} p
         <*> #{peek sg_process_stats, egid} p
+        <*> #{peek sg_process_stats, context_switches} p
+        <*> #{peek sg_process_stats, voluntary_context_switches} p
+        <*> #{peek sg_process_stats, involuntary_context_switches} p
         <*> #{peek sg_process_stats, proc_size} p
         <*> #{peek sg_process_stats, proc_resident} p
+        <*> #{peek sg_process_stats, start_time} p
         <*> #{peek sg_process_stats, time_spent} p
         <*> #{peek sg_process_stats, cpu_percent} p
         <*> #{peek sg_process_stats, nice} p
         <*> #{peek sg_process_stats, state} p
+        <*> #{peek sg_process_stats, systime} p
 
     poke p ProcessStats{..} = do
         #{poke sg_process_stats, process_name} p procName
@@ -835,46 +867,55 @@ instance Storable ProcessStats where
         #{poke sg_process_stats, pid} p procPid
         #{poke sg_process_stats, parent} p procParent
         #{poke sg_process_stats, pgid} p procPGid
+        #{poke sg_process_stats, sessid} p procSessId
         #{poke sg_process_stats, uid} p procUid
         #{poke sg_process_stats, euid} p procEUid
         #{poke sg_process_stats, gid} p procGid
         #{poke sg_process_stats, egid} p procEGid
+        #{poke sg_process_stats, context_switches} p procSwitches
+        #{poke sg_process_stats, voluntary_context_switches} p procVoluntary
+        #{poke sg_process_stats, involuntary_context_switches} p procInvoluntary
         #{poke sg_process_stats, proc_size} p procSize
         #{poke sg_process_stats, proc_resident} p procResident
+        #{poke sg_process_stats, start_time} p procStart
         #{poke sg_process_stats, time_spent} p procSpent
         #{poke sg_process_stats, cpu_percent} p procCpuPercent
         #{poke sg_process_stats, nice} p procNice
         #{poke sg_process_stats, state} p procState
+        #{poke sg_process_stats, systime} p procSystime
 
-foreign import ccall safe "statgrab.h sg_"
-    sg_get_process_stats :: Entries -> IO (Ptr ProcessStats)
+foreign import ccall safe "statgrab.h sg_get_process_stats"
+    sg_get_process_stats :: Entries -> IO ProcessStatsPtr
 
-foreign import ccall safe "statgrab.h sg_"
-    sg_get_process_stats_r :: Entries -> IO (Ptr ProcessStats)
+foreign import ccall safe "statgrab.h sg_get_process_stats_r"
+    sg_get_process_stats_r :: Entries -> IO ProcessStatsPtr
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_process_compare_name"
     sg_process_compare_name :: Ptr () -> Ptr () -> IO CInt
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_process_compare_pid"
     sg_process_compare_pid :: Ptr () -> Ptr () -> IO CInt
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_process_compare_uid"
     sg_process_compare_uid :: Ptr () -> Ptr () -> IO CInt
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_process_compare_gid"
     sg_process_compare_gid :: Ptr () -> Ptr () -> IO CInt
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_process_compare_size"
     sg_process_compare_size :: Ptr () -> Ptr () -> IO CInt
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_process_compare_res"
     sg_process_compare_res :: Ptr () -> Ptr () -> IO CInt
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_process_compare_cpu"
     sg_process_compare_cpu :: Ptr () -> Ptr () -> IO CInt
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_process_compare_time"
     sg_process_compare_time :: Ptr () -> Ptr () -> IO CInt
+
+foreign import ccall safe "statgrab.h sg_free_process_stats"
+    sg_free_process_stats :: ProcessStatsPtr -> IO Error
 
 newtype Source = Source { unSource :: CInt }
     deriving (Eq, Show)
@@ -904,6 +945,8 @@ instance Storable ProcessCount where
         <*> #{peek sg_process_count, sleeping} p
         <*> #{peek sg_process_count, stopped} p
         <*> #{peek sg_process_count, zombie} p
+        <*> #{peek sg_process_count, unknown} p
+        <*> #{peek sg_process_count, systime} p
 
     poke p ProcessCount{..} = do
         #{poke sg_process_count, total} p countTotal
@@ -911,9 +954,14 @@ instance Storable ProcessCount where
         #{poke sg_process_count, sleeping} p countSleeping
         #{poke sg_process_count, stopped} p countStopped
         #{poke sg_process_count, zombie} p countZombie
+        #{poke sg_process_count, unknown} p countUnknown
+        #{poke sg_process_count, systime} p countSystime
 
 foreign import ccall safe "statgrab.h sg_get_process_count_of"
-    sg_get_process_count_of :: Source -> IO (Ptr ProcessCount)
+    sg_get_process_count_of :: Source -> IO ProcessCountPtr
 
 foreign import ccall safe "statgrab.h sg_get_process_count_r"
-    sg_get_process_count_r :: Ptr ProcessStats -> IO (Ptr ProcessCount)
+    sg_get_process_count_r :: ProcessStatsPtr -> IO ProcessCountPtr
+
+foreign import ccall safe "statgrab.h sg_free_process_count"
+    sg_free_process_count :: ProcessCountPtr -> IO Error
