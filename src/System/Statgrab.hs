@@ -92,10 +92,14 @@ async (Stats s) = Stats $ do
 
 -- | Retrieve statistics from the underlying operating system, copying them to
 -- the Haskell heap and freeing the related 'Ptr a'.
-snapshot :: (Pointer (Struct a), Copy a) => Stats a
-snapshot = liftIO $ acquire >>= \ptr -> copy ptr <* release ptr
+snapshot :: (Show a, Pointer (Struct a), Copy a) => Stats a
+snapshot = liftIO $ bracket acquire release copy
+
+--
+-- Internal
+--
 
 destroy :: IORef Word -> IO ()
 destroy ref = do
     n <- atomicModifyIORef' ref $ \n -> (pred n, n)
-    when (n == 1) $ void (print "Shutting down..." >> sg_shutdown)
+    when (n == 1) $ void sg_shutdown

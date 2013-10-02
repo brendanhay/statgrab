@@ -24,7 +24,6 @@ apt-get install -y \
  man \
  git-core \
  zlib1g-dev \
- libstatgrab-dev \
  ghc \
  cabal-install
 
@@ -33,7 +32,16 @@ echo 'export PATH=~/.cabal/bin:$PATH' > ~/.bashrc
 
 cabal update && {
     cabal install cabal-install
-    cabal install cabal-dev cabal-meta alex happy c2hsc
+    cabal install alex happy c2hsc
 }
 "
+
+wget http://dl.ambiweb.de/mirrors/ftp.i-scream.org/libstatgrab/libstatgrab-0.90.tar.gz
+tar xvf libstatgrab-0.90.tar.gz
+
+cd libstatgrab-0.90
+
+./configure
+make
+sudo make install
 SCRIPT
