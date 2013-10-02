@@ -42,11 +42,11 @@ instance Copy Host where
     type Struct Host = CHost
     copy ptr = do
         CHost{..} <- peek ptr
-        Host <$> (packCString hostOsName)
-             <*> (packCString hostOsRelease)
-             <*> (packCString hostOsVersion)
-             <*> (packCString hostPlatform)
-             <*> (packCString hostName)
+        Host <$> packCString hostOsName
+             <*> packCString hostOsRelease
+             <*> packCString hostOsVersion
+             <*> packCString hostPlatform
+             <*> packCString hostName
              <#> hostBitWidth
              <!> hostState
              <#> hostNCPU
@@ -104,7 +104,7 @@ instance Copy CPUPercent where
     type Struct CPUPercent = CCPUPercent
     copy ptr = do
         CCPUPercent{..} <- peek ptr
-        CPUPercent <$> (pure $ realToFrac cpuPctUser)
+        CPUPercent <$> pure (realToFrac cpuPctUser)
                    <@> cpuPctKernel
                    <@> cpuPctIdle
                    <@> cpuPctIOWait
@@ -141,7 +141,7 @@ instance Copy Load where
     type Struct Load = CLoad
     copy ptr = do
         CLoad{..} <- peek ptr
-        Load <$> (pure $ realToFrac load1)
+        Load <$> pure (realToFrac load1)
              <@> load5
              <@> load15
              <@> loadSystime
@@ -162,11 +162,11 @@ instance Copy User where
     type Struct User = CUser
     copy ptr = do
         CUser{..} <- peek ptr
-        User <$> (packCString userLoginName)
-             <*> (packCString userRecordId)
+        User <$> packCString userLoginName
+             <*> packCString userRecordId
              <#> userRecordIdSize
-             <*> (packCString userDevice)
-             <*> (packCString userHostName)
+             <*> packCString userDevice
+             <*> packCString userHostName
              <#> userPid
              <@> userLoginTime
              <@> userSystime
@@ -213,9 +213,9 @@ instance Copy FileSystem where
     type Struct FileSystem = CFileSystem
     copy ptr = do
         CFileSystem{..} <- peek ptr
-        FileSystem <$> (packCString fsDeviceName)
-                   <*> (packCString fsType)
-                   <*> (packCString fsMountPoint)
+        FileSystem <$> packCString fsDeviceName
+                   <*> packCString fsType
+                   <*> packCString fsMountPoint
                    <!> fsDeviceType
                    <#> fsSize
                    <#> fsUsed
@@ -244,7 +244,7 @@ instance Copy DiskIO where
     type Struct DiskIO = CDiskIO
     copy ptr = do
         CDiskIO{..} <- peek ptr
-        DiskIO <$> (packCString diskName)
+        DiskIO <$> packCString diskName
                <#> diskRead
                <#> diskWrite
                <@> diskSystime
@@ -265,7 +265,7 @@ instance Copy NetworkIO where
     type Struct NetworkIO = CNetworkIO
     copy ptr = do
         CNetworkIO{..} <- peek ptr
-        NetworkIO <$> (packCString ifaceIOName)
+        NetworkIO <$> packCString ifaceIOName
                   <#> ifaceTX
                   <#> ifaceRX
                   <#> ifaceIPackets
@@ -288,7 +288,7 @@ instance Copy NetworkInterface where
     type Struct NetworkInterface = CNetworkInterface
     copy ptr = do
         CNetworkInterface{..} <- peek ptr
-        NetworkInterface <$> (packCString ifaceName)
+        NetworkInterface <$> packCString ifaceName
                          <#> ifaceSpeed
                          <#> ifaceFactor
                          <!> ifaceDuplex
@@ -337,8 +337,8 @@ instance Copy Process where
     type Struct Process = CProcess
     copy ptr = do
         CProcess{..} <- peek ptr
-        Process <$> (packCString procName)
-                <*> (packCString procTitle)
+        Process <$> packCString procName
+                <*> packCString procTitle
                 <#> procPid
                 <#> procParent
                 <#> procPGid
@@ -384,13 +384,13 @@ instance Copy ProcessCount where
 infixl 4 <%>, <#>, <@>, <!>
 
 (<%>) :: (Integral a, Applicative f) => (Integer -> b) -> a -> f b
-(<%>) a b = a <$> (pure $ toInteger b)
+(<%>) a b = a <$> pure (toInteger b)
 
 (<#>) :: (Integral a, Applicative f) => f (Integer -> b) -> a -> f b
-(<#>) a b = a <*> (pure $ toInteger b)
+(<#>) a b = a <*> pure (toInteger b)
 
 (<@>) :: (Fractional a, Real c, Applicative f) => f (a -> b) -> c -> f b
-(<@>) a b = a <*> (pure $ realToFrac b)
+(<@>) a b = a <*> pure (realToFrac b)
 
 (<!>) :: Applicative f => f (a -> b) -> a -> f b
 (<!>) a b = a <*> pure b
