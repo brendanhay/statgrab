@@ -85,46 +85,46 @@ data ErrorDetails = ErrorDetails
     , erArg   :: {-# UNPACK #-} !CString
     }
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_get_error"
      sg_get_error :: IO Error
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_get_error_arg"
      sg_get_error_arg :: IO CString
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_get_error_errno"
      sg_get_error_errno :: IO CInt
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_get_error_details"
      sg_get_error_details :: Ptr ErrorDetails -> IO Error
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_str_error"
      sg_str_error :: Error -> IO CString
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_strperror"
      sg_strperror :: Ptr CString -> Ptr ErrorDetails -> IO CString
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_init"
      sg_init :: CInt -> IO Error
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_snapshot"
      sg_snapshot :: IO Error
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_shutdown"
      sg_shutdown :: IO Error
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_drop_privileges"
      sg_drop_privileges :: IO Error
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_get_nelements"
      sg_get_nelements :: Ptr () -> IO CSize
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_free_stats_buf"
      sg_free_stats_buf :: Ptr () -> IO Error
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_lock_mutex"
      sg_lock_mutex :: CString -> IO Error
 
-foreign import ccall safe "statgrab.h sg_"
+foreign import ccall safe "statgrab.h sg_unlock_mutex"
      sg_unlock_mutex :: CString -> IO Error
 
 foreign import ccall safe "statgrab.h sg_free_host_info"
