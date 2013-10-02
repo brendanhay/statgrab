@@ -1,5 +1,7 @@
 # Statgrab
 
+Haskell bindings to the portable system statistics `libstatgrab` library.
+
 ## Table of Contents
 
 * [Introduction](#introduction)
@@ -11,8 +13,6 @@
 
 
 ## Introduction
-
-Haskell bindings to the portable system statistics `libstatgrab` library.
 
 `libstatgrab` is a library that provides cross platform access to statistics
 about the system on which it's run. It's written in C and presents a selection
@@ -29,12 +29,19 @@ for more information.
 
 ## Compatibility
 
-> TODO
+`libstatgrab 0.9.0` is required.
+
+While the bindings should correctly build on the same platforms as supported by
+the library, only OSX and Linux have currently been tested.
 
 
 ## Installation
 
-> TODO
+Install `libstatgrab 0.9.0` from one of the mirrors: http://www.i-scream.org/libstatgrab/
+
+```
+cabal install
+```
 
 
 ## Examples
