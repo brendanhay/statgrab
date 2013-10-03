@@ -1,5 +1,5 @@
 name:                  statgrab
-version:               0.1.1
+version:               0.1.2
 synopsis:              Collect system level metrics and statistics
 homepage:              http://github.com/brendanhay/statgrab
 license:               OtherLicense
@@ -28,7 +28,7 @@ description:
     * Be aware that currently these bindings have been developed and tested
       only on OSX/Linux.
     .
-    Haddock documentation can also be found on [GitHub](http://brendanhay.github.io/statgrab/System-Statgrab.html).
+    Haddock documentation can also be found on <http://brendanhay.github.io/statgrab/System-Statgrab.html>.
 
 extra-source-files:
     README.md
