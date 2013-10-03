@@ -31,7 +31,7 @@ Further documentation can be found on [Hackage](http://hackage.haskell.org/packa
 
 ## Compatibility
 
-`libstatgrab 0.9.0` is required.
+`libstatgrab` `0.9.0` is required.
 
 While the bindings should correctly build on the same platforms as supported by
 the library, only OSX and Linux have currently been tested.
@@ -39,7 +39,7 @@ the library, only OSX and Linux have currently been tested.
 
 ## Installation
 
-Install `libstatgrab 0.9.0` from a [mirror](http://www.i-scream.org/mirrors.xhtml),
+Install `libstatgrab` `0.9.0` from a [mirror](http://www.i-scream.org/mirrors.xhtml),
 and then run `cabal install`.
 
 
