@@ -13,22 +13,24 @@ build-type:            Simple
 cabal-version:         >= 1.10
 
 description:
-    Provides an interface to the cross platform system statistics C library libstatgrab.
+    Provides an interface to the cross platform system statistics C library, 'libstatgrab'.
     .
     It supports a wide range of system statistics including CPU usage, memory utilisation,
     disk usage, process counts, network traffic, disk I/O, and more.
     .
     The current list of supported and tested platforms for the underlying library
-    includes OSX, FreeBSD, Linux, NetBSD, OpenBSD, Solaris, DragonFly BSD, HP-UX and AIX.
+    include OSX, FreeBSD, Linux, NetBSD, OpenBSD, Solaris, DragonFly BSD, HP-UX and AIX.
     .
     /Requirements:/
     .
-    * libstatgrab @0.9.0@ must be installed on the target system.
+    * 'libstatgrab' @0.9.0@ must be installed on the target system.
     .
-    * Be aware that currently these bindings have been developed and tested
-      only on OSX/Linux.
+    /Note:/
     .
-    Haddock documentation can also be found on <http://brendanhay.github.io/statgrab/System-Statgrab.html>.
+    * Currently these bindings have only been developed and tested on OSX and Linux.
+    .
+    * If the Haddock documentation on Hackage is broken, you can also find an up
+    to date copy at <http://brendanhay.github.io/statgrab/System-Statgrab.html>.
 
 extra-source-files:
     README.md
