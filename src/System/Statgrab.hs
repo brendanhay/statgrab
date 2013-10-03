@@ -72,7 +72,7 @@ newtype Stats a = Stats { unwrap :: ReaderT (IORef Word) IO a }
     deriving (Applicative, Functor, Monad, MonadIO, MonadCatchIO)
 
 -- | Run the 'Stats' Monad, bracketing libstatgrab's sg_init and sg_shutdown
--- calls via reference counting.
+-- calls via reference counting to ensure reentrancy.
 runStats :: MonadCatchIO m => Stats a -> m a
 runStats = liftIO
     . bracket (sg_init 0 >> sg_drop_privileges >> newIORef 1) destroy
