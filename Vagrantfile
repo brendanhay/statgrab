@@ -38,9 +38,7 @@ cabal update && {
 
 wget http://dl.ambiweb.de/mirrors/ftp.i-scream.org/libstatgrab/libstatgrab-0.90.tar.gz
 tar xvf libstatgrab-0.90.tar.gz
-
 cd libstatgrab-0.90
-
 ./configure
 make
 sudo make install
