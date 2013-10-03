@@ -8,7 +8,7 @@ all: build
 build:
 	cabal build $(addprefix -,$(findstring j,$(MAKEFLAGS)))
 
-install: $(DEPS) cabal.sandbox.config
+install: cabal.sandbox.config
 	cabal install $(FLAGS)
 
 clean:
