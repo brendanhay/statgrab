@@ -1151,10 +1151,6 @@ instance Storable (Struct ProcessCount) where
         #{poke sg_process_count, unknown} p countUnknown
         #{poke sg_process_count, systime} p countSystime
 
-instance Stat (Struct ProcessCount) where
-    acquire = alloca sg_get_process_count_r
-    release = sg_free_process_count
-
 foreign import ccall safe "statgrab.h sg_get_process_count_of"
     sg_get_process_count_of :: ProcessSource -> IO ProcessCountPtr
 
