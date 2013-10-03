@@ -53,9 +53,7 @@ import Control.Monad.IO.Class
 import System.Statgrab
 
 main :: IO ()
-main = runStats $ do
-    h <- snapshot :: Stats Host
-    liftIO $ print h
+main = runStats $ (snapshot :: Stats Host) >>= liftIO . print
 ```
 
 
