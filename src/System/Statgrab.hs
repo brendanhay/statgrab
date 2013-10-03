@@ -15,19 +15,17 @@
 -- with transparent resource allocation and deallocation.
 module System.Statgrab
     (
-    -- * Operations on the @Stats@ Monad
+    -- * Running the @Stats@ Monad
       Stats
     , runStats
-    , snapshot
-
-    -- * Concurrency
     , async
 
-    -- * Type Classes
-    , Pointer          (..)
-    , Copy             (..)
+     -- * Retrieving Statistics
+    , snapshot
+    , Stat
+    , Struct
 
-    -- * Statistics
+    -- * Statistic Types
     , Host             (..)
     , CPU              (..)
     , CPUPercent       (..)
@@ -68,7 +66,7 @@ import           Control.Monad.Trans.Reader
 import           Data.IORef
 import           GHC.Word
 import           System.Statgrab.Base
-import           System.Statgrab.Interface
+import           System.Statgrab.Internal
 
 newtype Stats a = Stats { unwrap :: ReaderT (IORef Word) IO a }
     deriving (Applicative, Functor, Monad, MonadIO, MonadCatchIO)
@@ -77,7 +75,7 @@ newtype Stats a = Stats { unwrap :: ReaderT (IORef Word) IO a }
 -- calls via reference counting.
 runStats :: MonadCatchIO m => Stats a -> m a
 runStats = liftIO
-    . bracket (sg_init 0 >> newIORef 1) destroy
+    . bracket (sg_init 0 >> sg_drop_privileges >> newIORef 1) destroy
     . runReaderT
     . unwrap
 
@@ -91,8 +89,11 @@ async (Stats s) = Stats $ do
         Async.async $ runReaderT s ref `E.finally` destroy ref
 
 -- | Retrieve statistics from the underlying operating system, copying them to
--- the Haskell heap and freeing the related 'Ptr a'.
-snapshot :: (Show a, Pointer (Struct a), Copy a) => Stats a
+-- the Haskell heap and freeing the related @Ptr a@.
+--
+-- The *_r variants of the libstatgrab functions are used and
+-- the deallocation strategy is bracketed.
+snapshot :: (Stat (Struct a), Copy a) => Stats a
 snapshot = liftIO $ bracket acquire release copy
 
 --
