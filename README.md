@@ -26,6 +26,8 @@ NetBSD, OpenBSD, Solaris, DragonFly BSD, HP-UX and AIX.
 Please see the `libstatgrab` [homepage](http://www.i-scream.org/libstatgrab/)
 for more information.
 
+Further documentation can be found on [Hackage](http://hackage.haskell.org/package/statgrab).
+
 
 ## Compatibility
 
@@ -37,11 +39,8 @@ the library, only OSX and Linux have currently been tested.
 
 ## Installation
 
-Install `libstatgrab 0.9.0` from one of the mirrors: http://www.i-scream.org/libstatgrab/
-
-```
-cabal install
-```
+Install `libstatgrab 0.9.0` from a [mirror](http://www.i-scream.org/mirrors.xhtml),
+and then run `cabal install`.
 
 
 ## Examples
