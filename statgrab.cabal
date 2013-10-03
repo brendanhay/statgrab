@@ -30,7 +30,7 @@ description:
     * Currently these bindings have only been developed and tested on OSX and Linux.
     .
     * If the Haddock documentation on Hackage is broken, you can also find an up
-    to date copy at <http://brendanhay.github.io/statgrab/System-Statgrab.html>.
+    to date copy at <http://brendanhay.github.io/statgrab>.
 
 extra-source-files:
     README.md
