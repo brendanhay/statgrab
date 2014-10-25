@@ -1,8 +1,8 @@
-{-# LANGUAGE CPP                        #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE ForeignFunctionInterface   #-}
-{-# LANGUAGE RecordWildCards            #-}
-{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE CPP                      #-}
+{-# LANGUAGE FlexibleInstances        #-}
+{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE RecordWildCards          #-}
+{-# LANGUAGE TypeFamilies             #-}
 
 -- Module      : System.Statgrab.Base
 -- Copyright   : (c) 2013 Brendan Hay <brendan.g.hay@gmail.com>
@@ -26,12 +26,42 @@ import System.Statgrab.Internal
 
 data family Struct a
 
+-- | A wrapper around @Ptr a@ types.
+-- It allows us to keep track of the result count, which is needed for 'copyBatch'
+
+data PtrX a = PtrX {
+    _entries :: Int,
+    _ptr :: (Ptr a)
+}
+
+-- | Contains copy routines to marshall/unmarshall Storable @Stat a@ structures
+-- Minimal complete definition: @copyAt@
+
 class Copy a where
-    copy :: Ptr (Struct a) -> IO a
+    copyAt :: Ptr (Struct a) -> Int -> IO a
+    copyBatch :: PtrX (Struct a) -> IO [a]
+    copy :: PtrX (Struct a) -> IO a
+    
+    copy PtrX{..} = copyAt _ptr 0
+    copyBatch PtrX {..} =
+     mapM (\i -> copyAt _ptr i) entries
+     where
+      entries = if (_entries > 1) then [0..(_entries-1)] else [0]
 
 class Stat a where
-    acquire :: IO (Ptr a)
+    acquire :: Entries -> IO (Ptr a)
     release :: Ptr a -> IO Error
+
+-- A wrapper for 'acquire'. This allows us to couple @Ptr a@ and @Entries@
+_acquire f = do
+   (r,e) <- alloca $ \ptr -> do
+      _r <- f ptr
+      _e <- peek ptr
+      return (_r,_e)
+   return PtrX { _ptr = r, _entries = fromIntegral e :: Int }
+
+_release f PtrX{..} = do
+   f _ptr
 
 type ErrorDetailsPtr     = Ptr ErrorDetails
 type HostPtr             = Ptr (Struct Host)
@@ -172,8 +202,8 @@ data instance Struct Host = CHost
     }
 
 instance Copy Host where
-    copy ptr = do
-        CHost{..} <- peek ptr
+    copyAt ptr i = do
+        CHost{..} <- peekElemOff ptr i
         Host <$> packCString hostOsName
              <*> packCString hostOsRelease
              <*> packCString hostOsVersion
@@ -217,7 +247,7 @@ instance Storable (Struct Host) where
         #{poke sg_host_info, systime} p hostSystime
 
 instance Stat (Struct Host) where
-    acquire = alloca sg_get_host_info_r
+    acquire = sg_get_host_info_r
     release = sg_free_host_info
 
 foreign import ccall safe "statgrab.h sg_get_host_info"
@@ -247,8 +277,8 @@ data instance Struct CPU = CCPU
     }
 
 instance Copy CPU where
-    copy ptr = do
-        CCPU{..} <- peek ptr
+    copyAt ptr i = do
+        CCPU{..} <- peekElemOff ptr i
         CPU <%> cpuUser
             <#> cpuKernel
             <#> cpuIdle
@@ -301,7 +331,7 @@ instance Storable (Struct CPU) where
         #{poke sg_cpu_stats, systime} p cpuSystime
 
 instance Stat (Struct CPU) where
-    acquire = alloca sg_get_cpu_stats_r
+    acquire = sg_get_cpu_stats_r
     release = sg_free_cpu_stats
 
 foreign import ccall safe "statgrab.h sg_get_cpu_stats"
@@ -330,8 +360,8 @@ data instance Struct CPUPercent = CCPUPercent
     }
 
 instance Copy CPUPercent where
-    copy ptr = do
-        CCPUPercent{..} <- peek ptr
+    copyAt ptr i = do
+        CCPUPercent{..} <- peekElemOff ptr i
         CPUPercent <$> pure (realToFrac cpuPctUser)
                    <@> cpuPctKernel
                    <@> cpuPctIdle
@@ -386,8 +416,8 @@ data instance Struct Memory = CMemory
     }
 
 instance Copy Memory where
-    copy ptr = do
-        CMemory{..} <- peek ptr
+    copyAt ptr i = do
+        CMemory{..} <- peekElemOff ptr i
         Memory <%> memTotal
                <#> memFree
                <#> memUsed
@@ -412,7 +442,7 @@ instance Storable (Struct Memory) where
         #{poke sg_mem_stats, systime} p memSystime
 
 instance Stat (Struct Memory) where
-    acquire = alloca sg_get_mem_stats_r
+    acquire = sg_get_mem_stats_r
     release = sg_free_mem_stats
 
 foreign import ccall safe "statgrab.h sg_get_mem_stats"
@@ -432,8 +462,8 @@ data instance Struct Load = CLoad
     }
 
 instance Copy Load where
-    copy ptr = do
-        CLoad{..} <- peek ptr
+    copyAt ptr i = do
+        CLoad{..} <- peekElemOff ptr i
         Load <$> pure (realToFrac load1)
              <@> load5
              <@> load15
@@ -456,7 +486,7 @@ instance Storable (Struct Load) where
         #{poke sg_load_stats, systime} p loadSystime
 
 instance Stat (Struct Load) where
-    acquire = alloca sg_get_load_stats_r
+    acquire = sg_get_load_stats_r
     release = sg_free_load_stats
 
 foreign import ccall safe "statgrab.h sg_get_load_stats"
@@ -480,8 +510,8 @@ data instance Struct User = CUser
     }
 
 instance Copy User where
-    copy ptr = do
-        CUser{..} <- peek ptr
+    copyAt ptr i = do
+        CUser{..} <- peekElemOff ptr i
         User <$> packCString userLoginName
              <*> packCString userRecordId
              <#> userRecordIdSize
@@ -516,7 +546,7 @@ instance Storable (Struct User) where
         #{poke sg_user_stats, systime} p userSystime
 
 instance Stat (Struct User) where
-    acquire = alloca sg_get_user_stats_r
+    acquire = sg_get_user_stats_r
     release = sg_free_user_stats
 
 foreign import ccall safe "statgrab.h sg_get_user_stats"
@@ -536,8 +566,8 @@ data instance Struct Swap = CSwap
     }
 
 instance Copy Swap where
-    copy ptr = do
-        CSwap{..} <- peek ptr
+    copyAt ptr i = do
+        CSwap{..} <- peekElemOff ptr i
         Swap <%> swapTotal
              <#> swapUsed
              <#> swapFree
@@ -560,7 +590,7 @@ instance Storable (Struct Swap) where
         #{poke sg_swap_stats, systime} p swapSystime
 
 instance Stat (Struct Swap) where
-    acquire = alloca sg_get_swap_stats_r
+    acquire = sg_get_swap_stats_r
     release = sg_free_swap_stats
 
 foreign import ccall safe "statgrab.h sg_get_swap_stats"
@@ -605,8 +635,8 @@ data instance Struct FileSystem = CFileSystem
     }
 
 instance Copy FileSystem where
-    copy ptr = do
-        CFileSystem{..} <- peek ptr
+    copyAt ptr i = do
+        CFileSystem{..} <- peekElemOff ptr i
         FileSystem <$> packCString fsDeviceName
                    <*> packCString fsType
                    <*> packCString fsMountPoint
@@ -674,7 +704,7 @@ instance Storable (Struct FileSystem) where
         #{poke sg_fs_stats, systime} p fsSystime
 
 instance Stat (Struct FileSystem) where
-    acquire = alloca sg_get_fs_stats_r
+    acquire = sg_get_fs_stats_r
     release = sg_free_fs_stats
 
 foreign import ccall safe "statgrab.h sg_get_valid_filesystems"
@@ -717,8 +747,8 @@ data instance Struct DiskIO = CDiskIO
     }
 
 instance Copy DiskIO where
-    copy ptr = do
-        CDiskIO{..} <- peek ptr
+    copyAt ptr i = do
+        CDiskIO{..} <- peekElemOff ptr i
         DiskIO <$> packCString diskName
                <#> diskRead
                <#> diskWrite
@@ -741,7 +771,7 @@ instance Storable (Struct DiskIO) where
         #{poke sg_disk_io_stats, systime} p diskSystime
 
 instance Stat (Struct DiskIO) where
-    acquire = alloca sg_get_disk_io_stats_r
+    acquire = sg_get_disk_io_stats_r
     release = sg_free_disk_io_stats
 
 foreign import ccall safe "statgrab.h sg_get_disk_io_stats"
@@ -781,8 +811,8 @@ data instance Struct NetworkIO = CNetworkIO
     }
 
 instance Copy NetworkIO where
-    copy ptr = do
-        CNetworkIO{..} <- peek ptr
+    copyAt ptr i = do
+        CNetworkIO{..} <- peekElemOff ptr i
         NetworkIO <$> packCString ifaceIOName
                   <#> ifaceTX
                   <#> ifaceRX
@@ -820,7 +850,7 @@ instance Storable (Struct NetworkIO) where
         #{poke sg_network_io_stats, systime} p ifaceSystem
 
 instance Stat (Struct NetworkIO) where
-    acquire = alloca sg_get_network_io_stats_r
+    acquire = sg_get_network_io_stats_r
     release = sg_free_network_io_stats
 
 foreign import ccall safe "statgrab.h sg_get_network_io_stats"
@@ -865,8 +895,8 @@ data instance Struct NetworkInterface = CNetworkInterface
     }
 
 instance Copy NetworkInterface where
-    copy ptr = do
-        CNetworkInterface{..} <- peek ptr
+    copyAt ptr i = do
+        CNetworkInterface{..} <- peekElemOff ptr i
         NetworkInterface <$> packCString ifaceName
                          <#> ifaceSpeed
                          <#> ifaceFactor
@@ -895,7 +925,7 @@ instance Storable (Struct NetworkInterface) where
         #{poke sg_network_iface_stats, systime} p ifaceSystime
 
 instance Stat (Struct NetworkInterface) where
-    acquire = alloca sg_get_network_iface_stats_r
+    acquire = sg_get_network_iface_stats_r
     release = sg_free_network_iface_stats
 
 foreign import ccall safe "statgrab.h sg_get_network_iface_stats"
@@ -917,8 +947,8 @@ data instance Struct Page = CPage
     }
 
 instance Copy Page where
-    copy ptr = do
-        CPage{..} <- peek ptr
+    copyAt ptr i = do
+        CPage{..} <- peekElemOff ptr i
         Page <%> pagesIn
              <#> pagesOut
              <@> pagesSysTime
@@ -938,7 +968,7 @@ instance Storable (Struct Page) where
         #{poke sg_page_stats, systime} p pagesSysTime
 
 instance Stat (Struct Page) where
-    acquire = alloca sg_get_page_stats_r
+    acquire = sg_get_page_stats_r
     release = sg_free_page_stats
 
 foreign import ccall safe "statgrab.h sg_get_page_stats"
@@ -992,8 +1022,8 @@ data instance Struct Process = CProcess
     }
 
 instance Copy Process where
-    copy ptr = do
-        CProcess{..} <- peek ptr
+    copyAt ptr i = do
+        CProcess{..} <- peekElemOff ptr i
         Process <$> packCString procName
                 <*> packCString procTitle
                 <#> procPid
@@ -1067,8 +1097,8 @@ instance Storable (Struct Process) where
         #{poke sg_process_stats, systime} p procSystime
 
 instance Stat (Struct Process) where
-    acquire = alloca sg_get_process_stats_r
-    release = sg_free_process_stats
+ acquire = sg_get_process_stats_r
+ release = sg_free_process_stats
 
 foreign import ccall safe "statgrab.h sg_get_process_stats"
     sg_get_process_stats :: Entries -> IO ProcessPtr
@@ -1119,8 +1149,8 @@ data instance Struct ProcessCount = CProcessCount
     }
 
 instance Copy ProcessCount where
-    copy ptr = do
-        CProcessCount{..} <- peek ptr
+    copyAt ptr i = do
+        CProcessCount{..} <- peekElemOff ptr i
         ProcessCount <%> countTotal
                      <#> countRunning
                      <#> countSleeping

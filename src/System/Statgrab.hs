@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE RecordWildCards            #-}
 
 -- Module      : System.Statgrab
 -- Copyright   : (c) 2013 Brendan Hay <brendan.g.hay@gmail.com>
@@ -22,6 +23,7 @@ module System.Statgrab
 
      -- * Retrieving Statistics
     , snapshot
+    , snapshots
     , Stat
     , Struct
 
@@ -93,8 +95,14 @@ async (Stats s) = Stats $ do
 --
 -- The *_r variants of the libstatgrab functions are used and
 -- the deallocation strategy is bracketed.
+
 snapshot :: (Stat (Struct a), Copy a) => Stats a
-snapshot = liftIO $ bracket acquire release copy
+snapshot = liftIO $ bracket (_acquire acquire) (_release release) copy
+
+-- | Similar to 'snapshot'. 'snapshots' returns a list of results.
+
+snapshots :: (Stat (Struct a), Copy a) => Stats [a]
+snapshots = liftIO $ bracket (_acquire acquire) (_release release) copyBatch
 
 --
 -- Internal
