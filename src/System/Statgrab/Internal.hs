@@ -1,5 +1,5 @@
+{-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE TypeFamilies               #-}
 
 -- Module      : System.Statgrab.Internal
 -- Copyright   : (c) 2013 Brendan Hay <brendan.g.hay@gmail.com>
@@ -20,14 +20,37 @@ import Data.ByteString       (ByteString)
 import Data.Time.Clock.POSIX
 import Foreign
 import Foreign.C.Types
+import GHC.Generics          (Generic)
 
 type Entries = Ptr CSize
 
 newtype Error = Error CInt
-    deriving (Eq, Show)
+    deriving
+        ( Eq
+        , Ord
+        , Enum
+        , Bounded
+        , Integral
+        , Num
+        , Real
+        , Show
+        , Storable
+        , Generic
+        )
 
 newtype HostState = HostState CInt
-    deriving (Eq, Show, Storable)
+    deriving
+        ( Eq
+        , Ord
+        , Enum
+        , Bounded
+        , Integral
+        , Num
+        , Real
+        , Show
+        , Storable
+        , Generic
+        )
 
 data Host = Host
     { hostOsName    :: !ByteString
@@ -41,7 +64,7 @@ data Host = Host
     , hostMaxCPU    :: !Integer
     , hostUptime    :: !POSIXTime
     , hostSystime   :: !POSIXTime
-    } deriving (Eq, Show)
+    } deriving (Eq, Ord, Show, Generic)
 
 data CPU = CPU
     { cpuUser                   :: !Integer
@@ -58,10 +81,21 @@ data CPU = CPU
     , cpuInterrupts             :: !Integer
     , cpuSoftInterrupts         :: !Integer
     , cpuSystime                :: !POSIXTime
-    } deriving (Eq, Show)
+    } deriving (Eq, Ord, Show, Generic)
 
 newtype CPUPercentSource = CPUPercentSource CInt
-    deriving (Eq, Show, Storable)
+    deriving
+        ( Eq
+        , Ord
+        , Enum
+        , Bounded
+        , Integral
+        , Num
+        , Real
+        , Show
+        , Storable
+        , Generic
+        )
 
 data CPUPercent = CPUPercent
     { cpuPctUser      :: !Double
@@ -71,7 +105,7 @@ data CPUPercent = CPUPercent
     , cpuPctSwap      :: !Double
     , cpuPctNice      :: !Double
     , cpuPctTimeTaken :: !POSIXTime
-    } deriving (Eq, Show)
+    } deriving (Eq, Ord, Show, Generic)
 
 data Memory = Memory
     { memTotal   :: !Integer
@@ -79,14 +113,14 @@ data Memory = Memory
     , memUsed    :: !Integer
     , memCache   :: !Integer
     , memSystime :: !POSIXTime
-    } deriving (Eq, Show)
+    } deriving (Eq, Ord, Show, Generic)
 
 data Load = Load
     { load1       :: !Double
     , load5       :: !Double
     , load15      :: !Double
     , loadSystime :: !POSIXTime
-    } deriving (Eq, Show)
+    } deriving (Eq, Ord, Show, Generic)
 
 data User = User
     { userLoginName    :: !ByteString
@@ -97,17 +131,28 @@ data User = User
     , userPid          :: !Integer
     , userLoginTime    :: !POSIXTime
     , userSystime      :: !POSIXTime
-    } deriving (Eq, Show)
+    } deriving (Eq, Ord, Show, Generic)
 
 data Swap = Swap
     { swapTotal   :: !Integer
     , swapUsed    :: !Integer
     , swapFree    :: !Integer
     , swapSystime :: !POSIXTime
-    } deriving (Eq, Show)
+    } deriving (Eq, Ord, Show, Generic)
 
 newtype DeviceType = DeviceType CInt
-    deriving (Eq, Show, Storable)
+    deriving
+        ( Eq
+        , Ord
+        , Enum
+        , Bounded
+        , Integral
+        , Num
+        , Real
+        , Show
+        , Storable
+        , Generic
+        )
 
 data FileSystem = FileSystem
     { fsDeviceName  :: !ByteString
@@ -129,14 +174,14 @@ data FileSystem = FileSystem
     , fsUsedBlocks  :: !Integer
     , fsAvailBlocks :: !Integer
     , fsSystime     :: !POSIXTime
-    } deriving (Eq, Show)
+    } deriving (Eq, Ord, Show, Generic)
 
 data DiskIO = DiskIO
     { diskName    :: !ByteString
     , diskRead    :: !Integer
     , diskWrite   :: !Integer
     , diskSystime :: !POSIXTime
-    } deriving (Eq, Show)
+    } deriving (Eq, Ord, Show, Generic)
 
 data NetworkIO = NetworkIO
     { ifaceIOName     :: !ByteString
@@ -148,13 +193,35 @@ data NetworkIO = NetworkIO
     , ifaceOErrors    :: !Integer
     , ifaceCollisions :: !Integer
     , ifaceSystem     :: !POSIXTime
-    } deriving (Eq, Show)
+    } deriving (Eq, Ord, Show, Generic)
 
 newtype InterfaceMode = InterfaceMode CInt
-    deriving (Eq, Show, Storable)
+    deriving
+        ( Eq
+        , Ord
+        , Enum
+        , Bounded
+        , Integral
+        , Num
+        , Real
+        , Show
+        , Storable
+        , Generic
+        )
 
 newtype InterfaceStatus = InterfaceStatus CInt
-    deriving (Eq, Show, Storable)
+    deriving
+        ( Eq
+        , Ord
+        , Enum
+        , Bounded
+        , Integral
+        , Num
+        , Real
+        , Show
+        , Storable
+        , Generic
+        )
 
 data NetworkInterface = NetworkInterface
     { ifaceName    :: !ByteString
@@ -163,16 +230,27 @@ data NetworkInterface = NetworkInterface
     , ifaceDuplex  :: !InterfaceMode
     , ifaceUp      :: !InterfaceStatus
     , ifaceSystime :: !POSIXTime
-    } deriving (Eq, Show)
+    } deriving (Eq, Ord, Show, Generic)
 
 data Page = Page
     { pagesIn      :: !Integer
     , pagesOut     :: !Integer
     , pagesSysTime :: !POSIXTime
-    } deriving (Eq, Show)
+    } deriving (Eq, Ord, Show, Generic)
 
 newtype ProcessState = ProcessState CInt
-    deriving (Eq, Show, Storable)
+    deriving
+        ( Eq
+        , Ord
+        , Enum
+        , Bounded
+        , Integral
+        , Num
+        , Real
+        , Show
+        , Storable
+        , Generic
+        )
 
 data Process = Process
     { procName        :: !ByteString
@@ -196,10 +274,21 @@ data Process = Process
     , procNice        :: !Integer
     , procState       :: !ProcessState
     , procSystime     :: !POSIXTime
-    } deriving (Eq, Show)
+    } deriving (Eq, Ord, Show, Generic)
 
 newtype ProcessSource = ProcessSource CInt
-    deriving (Eq, Show)
+    deriving
+        ( Eq
+        , Ord
+        , Enum
+        , Bounded
+        , Integral
+        , Num
+        , Real
+        , Show
+        , Storable
+        , Generic
+        )
 
 data ProcessCount = ProcessCount
     { countTotal    :: !Integer
@@ -209,7 +298,7 @@ data ProcessCount = ProcessCount
     , countZombie   :: !Integer
     , countUnknown  :: !Integer
     , countSystime  :: !POSIXTime
-    } deriving (Eq, Show)
+    } deriving (Eq, Ord, Show, Generic)
 
 infixl 4 <%>, <#>, <@>, <!>
 
