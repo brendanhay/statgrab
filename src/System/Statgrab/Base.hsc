@@ -39,17 +39,17 @@ class Copy a where
     copyAt    :: Ptr  (Struct a) -> Int -> IO a
     copyBatch :: PtrN (Struct a) -> IO [a]
     copy      :: PtrN (Struct a) -> IO a
-    {-# MINIMAL copyAt #-}
 
     copy      PtrN{..} = copyAt ptrUnwrap 0
-    {-# INLINE copy #-}
-
     copyBatch PtrN{..} = mapM (\i -> copyAt ptrUnwrap i) entries
       where
         entries
             | ptrEntries > 1 = [0..ptrEntries - 1]
             | otherwise      = [0]
-    {-# INLINE copyAt #-}
+
+    {-# MINIMAL copyAt    #-}
+    {-# INLINE  copy      #-}
+    {-# INLINE  copyBatch #-}
 
 -- | Bracket routines for acquiring and releasing @Ptr a@s.
 class Stat a where
