@@ -1,6 +1,5 @@
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE RecordWildCards            #-}
 
 -- Module      : System.Statgrab
 -- Copyright   : (c) 2013 Brendan Hay <brendan.g.hay@gmail.com>
