@@ -39,15 +39,17 @@ class Copy a where
     copyAt    :: Ptr  (Struct a) -> Int -> IO a
     copyBatch :: PtrN (Struct a) -> IO [a]
     copy      :: PtrN (Struct a) -> IO a
+    {-# MINIMAL copyAt #-}
 
     copy      PtrN{..} = copyAt ptrUnwrap 0
+    {-# INLINE copy #-}
+
     copyBatch PtrN{..} = mapM (\i -> copyAt ptrUnwrap i) entries
       where
         entries
             | ptrEntries > 1 = [0..ptrEntries - 1]
             | otherwise      = [0]
-
-    {-# MINIMAL copyAt #-}
+    {-# INLINE copyAt #-}
 
 -- | Bracket routines for acquiring and releasing @Ptr a@s.
 class Stat a where
@@ -58,9 +60,11 @@ class Stat a where
 -- contained in a @Ptr a@.
 acquireN :: Stat a => IO (PtrN a)
 acquireN = alloca $ \x -> PtrN <$> (fromIntegral <$> peek x) <*> acquire x
+{-# INLINE acquireN #-}
 
 releaseN :: Stat a => PtrN a -> IO Error
 releaseN = release . ptrUnwrap
+{-# INLINE releaseN #-}
 
 type ErrorDetailsPtr     = Ptr ErrorDetails
 type HostPtr             = Ptr (Struct Host)

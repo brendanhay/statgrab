@@ -95,12 +95,14 @@ async (Stats s) = Stats $ do
 -- the deallocation strategy is bracketed.
 snapshot :: (Stat (Struct a), Copy a) => Stats a
 snapshot = liftIO (E.bracket acquireN releaseN copy)
+{-# INLINE snapshot #-}
 
 -- | Retrieve a list of statistics from the underlying operating system.
 --
 -- /See:/ 'snapshot'.
 snapshots :: (Stat (Struct a), Copy a) => Stats [a]
 snapshots = liftIO (E.bracket acquireN releaseN copyBatch)
+{-# INLINE snapshots #-}
 
 destroy :: IORef Word -> IO ()
 destroy ref = do
