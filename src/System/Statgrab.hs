@@ -61,7 +61,6 @@ import           Control.Concurrent.Async   (Async, wait)
 import qualified Control.Concurrent.Async   as Async
 import qualified Control.Exception          as E
 import           Control.Monad
-import           Control.Monad.CatchIO
 import           Control.Monad.IO.Class
 import           Control.Monad.Trans.Reader
 import           Data.IORef
@@ -70,13 +69,13 @@ import           System.Statgrab.Base
 import           System.Statgrab.Internal
 
 newtype Stats a = Stats { unwrap :: ReaderT (IORef Word) IO a }
-    deriving (Applicative, Functor, Monad, MonadIO, MonadCatchIO)
+    deriving (Applicative, Functor, Monad, MonadIO)
 
 -- | Run the 'Stats' Monad, bracketing libstatgrab's sg_init and sg_shutdown
 -- calls via reference counting to ensure reentrancy.
-runStats :: MonadCatchIO m => Stats a -> m a
+runStats :: MonadIO m => Stats a -> m a
 runStats = liftIO
-    . bracket (sg_init 0 >> sg_drop_privileges >> newIORef 1) destroy
+    . E.bracket (sg_init 0 >> sg_drop_privileges >> newIORef 1) destroy
     . runReaderT
     . unwrap
 
@@ -94,20 +93,17 @@ async (Stats s) = Stats $ do
 --
 -- The *_r variants of the libstatgrab functions are used and
 -- the deallocation strategy is bracketed.
-
 snapshot :: (Stat (Struct a), Copy a) => Stats a
-snapshot = liftIO $ bracket (_acquire acquire) (_release release) copy
+snapshot = liftIO (E.bracket acquireN releaseN copy)
 
--- | Similar to 'snapshot'. 'snapshots' returns a list of results.
-
+-- | Retrieve a list of statistics from the underlying operating system.
+--
+-- /See:/ 'snapshot'.
 snapshots :: (Stat (Struct a), Copy a) => Stats [a]
-snapshots = liftIO $ bracket (_acquire acquire) (_release release) copyBatch
-
---
--- Internal
---
+snapshots = liftIO (E.bracket acquireN releaseN copyBatch)
 
 destroy :: IORef Word -> IO ()
 destroy ref = do
     n <- atomicModifyIORef' ref $ \n -> (pred n, n)
-    when (n == 1) $ void sg_shutdown
+    when (n == 1) $
+        void sg_shutdown
