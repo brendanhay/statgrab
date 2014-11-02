@@ -31,7 +31,7 @@ data family Struct a
 -- needed for 'copyBatch'.
 data PtrN a = PtrN
     { ptrEntries :: !Int
-    , ptrUnwrap  :: (Ptr a)
+    , ptrUnwrap  :: Ptr a
     }
 
 -- | Copy routines to marshall and unmarshall Storable @Stat a@ structures.
