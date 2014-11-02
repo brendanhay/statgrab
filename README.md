@@ -52,7 +52,9 @@ import Control.Monad.IO.Class
 import System.Statgrab
 
 main :: IO ()
-main = runStats $ (snapshot :: Stats Host) >>= liftIO . print
+main = do
+ runStats $ (snapshot :: Stats Host) >>= liftIO . print
+ runStats $ (snapshots :: Stats [NetworkInterface]) >>= liftIO . print
 ```
 
 
