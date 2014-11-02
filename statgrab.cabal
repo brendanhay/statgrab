@@ -46,7 +46,6 @@ library
     exposed-modules:
         System.Statgrab
         System.Statgrab.Base
-        System.Statgrab.Internal
 
     ghc-options:
         -Wall -O2
