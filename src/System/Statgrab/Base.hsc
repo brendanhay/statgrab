@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP                      #-}
+{-# LANGUAGE FlexibleContexts         #-}
 {-# LANGUAGE FlexibleInstances        #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE RecordWildCards          #-}
@@ -26,42 +27,40 @@ import System.Statgrab.Internal
 
 data family Struct a
 
--- | A wrapper around @Ptr a@ types.
--- It allows us to keep track of the result count, which is needed for 'copyBatch'
+-- | A wrapper around @Ptr a@ which keeps track of the result @Entries@,
+-- needed for 'copyBatch'.
+data PtrN a = PtrN
+    { ptrEntries :: !Int
+    , ptrUnwrap  :: (Ptr a)
+    }
 
-data PtrX a = PtrX {
-    _entries :: Int,
-    _ptr :: (Ptr a)
-}
-
--- | Contains copy routines to marshall/unmarshall Storable @Stat a@ structures
--- Minimal complete definition: @copyAt@
-
+-- | Copy routines to marshall and unmarshall Storable @Stat a@ structures.
 class Copy a where
-    copyAt :: Ptr (Struct a) -> Int -> IO a
-    copyBatch :: PtrX (Struct a) -> IO [a]
-    copy :: PtrX (Struct a) -> IO a
-    
-    copy PtrX{..} = copyAt _ptr 0
-    copyBatch PtrX {..} =
-     mapM (\i -> copyAt _ptr i) entries
-     where
-      entries = if (_entries > 1) then [0..(_entries-1)] else [0]
+    copyAt    :: Ptr  (Struct a) -> Int -> IO a
+    copyBatch :: PtrN (Struct a) -> IO [a]
+    copy      :: PtrN (Struct a) -> IO a
 
+    copy      PtrN{..} = copyAt ptrUnwrap 0
+    copyBatch PtrN{..} = mapM (\i -> copyAt ptrUnwrap i) entries
+      where
+        entries
+            | ptrEntries > 1 = [0..ptrEntries - 1]
+            | otherwise      = [0]
+
+    {-# MINIMAL copyAt #-}
+
+-- | Bracket routines for acquiring and releasing @Ptr a@s.
 class Stat a where
     acquire :: Entries -> IO (Ptr a)
-    release :: Ptr a -> IO Error
+    release :: Ptr a   -> IO Error
 
--- A wrapper for 'acquire'. This allows us to couple @Ptr a@ and @Entries@
-_acquire f = do
-   (r,e) <- alloca $ \ptr -> do
-      _r <- f ptr
-      _e <- peek ptr
-      return (_r,_e)
-   return PtrX { _ptr = r, _entries = fromIntegral e :: Int }
+-- | A wrapper for 'acquire'. This allows tracking the number of @Entries@
+-- contained in a @Ptr a@.
+acquireN :: Stat a => IO (PtrN a)
+acquireN = alloca $ \x -> PtrN <$> (fromIntegral <$> peek x) <*> acquire x
 
-_release f PtrX{..} = do
-   f _ptr
+releaseN :: Stat a => PtrN a -> IO Error
+releaseN = release . ptrUnwrap
 
 type ErrorDetailsPtr     = Ptr ErrorDetails
 type HostPtr             = Ptr (Struct Host)
