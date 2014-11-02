@@ -1097,8 +1097,8 @@ instance Storable (Struct Process) where
         #{poke sg_process_stats, systime} p procSystime
 
 instance Stat (Struct Process) where
- acquire = sg_get_process_stats_r
- release = sg_free_process_stats
+    acquire = sg_get_process_stats_r
+    release = sg_free_process_stats
 
 foreign import ccall safe "statgrab.h sg_get_process_stats"
     sg_get_process_stats :: Entries -> IO ProcessPtr
