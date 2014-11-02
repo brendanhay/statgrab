@@ -135,9 +135,9 @@ type ProcessCountPtr     = Ptr (Struct ProcessCount)
     }
 
 data ErrorDetails = ErrorDetails
-    { erError :: {-# UNPACK #-} !Error
-    , erValue :: {-# UNPACK #-} !CInt
-    , erArg   :: {-# UNPACK #-} !CString
+    { erError :: !Error
+    , erValue :: !CInt
+    , erArg   :: !CString
     }
 
 foreign import ccall safe "statgrab.h sg_get_error"
@@ -191,17 +191,17 @@ foreign import ccall safe "statgrab.h sg_unlock_mutex"
     }
 
 data instance Struct Host = CHost
-    { hostOsName    :: {-# UNPACK #-} !CString
-    , hostOsRelease :: {-# UNPACK #-} !CString
-    , hostOsVersion :: {-# UNPACK #-} !CString
-    , hostPlatform  :: {-# UNPACK #-} !CString
-    , hostName      :: {-# UNPACK #-} !CString
-    , hostBitWidth  :: {-# UNPACK #-} !CUInt
-    , hostState     :: {-# UNPACK #-} !HostState
-    , hostNCPU      :: {-# UNPACK #-} !CUInt
-    , hostMaxCPU    :: {-# UNPACK #-} !CUInt
-    , hostUptime    :: {-# UNPACK #-} !CTime
-    , hostSystime   :: {-# UNPACK #-} !CTime
+    { hostOsName    :: !CString
+    , hostOsRelease :: !CString
+    , hostOsVersion :: !CString
+    , hostPlatform  :: !CString
+    , hostName      :: !CString
+    , hostBitWidth  :: !CUInt
+    , hostState     :: !HostState
+    , hostNCPU      :: !CUInt
+    , hostMaxCPU    :: !CUInt
+    , hostUptime    :: !CTime
+    , hostSystime   :: !CTime
     }
 
 instance Copy Host where
@@ -263,20 +263,20 @@ foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_host_info :: HostPtr -> IO Error
 
 data instance Struct CPU = CCPU
-    { cpuUser                   :: {-# UNPACK #-} !CLLong
-    , cpuKernel                 :: {-# UNPACK #-} !CLLong
-    , cpuIdle                   :: {-# UNPACK #-} !CLLong
-    , cpuIOWait                 :: {-# UNPACK #-} !CLLong
-    , cpuSwap                   :: {-# UNPACK #-} !CLLong
-    , cpuNice                   :: {-# UNPACK #-} !CLLong
-    , cpuTotal                  :: {-# UNPACK #-} !CLLong
-    , cpuCtxSwitches            :: {-# UNPACK #-} !CLLong
-    , cpuVoluntaryCtxSwitches   :: {-# UNPACK #-} !CLLong
-    , cpuInvoluntaryCtxSwitches :: {-# UNPACK #-} !CLLong
-    , cpuSyscalls               :: {-# UNPACK #-} !CLLong
-    , cpuInterrupts             :: {-# UNPACK #-} !CLLong
-    , cpuSoftInterrupts         :: {-# UNPACK #-} !CLLong
-    , cpuSystime                :: {-# UNPACK #-} !CTime
+    { cpuUser                   :: !CLLong
+    , cpuKernel                 :: !CLLong
+    , cpuIdle                   :: !CLLong
+    , cpuIOWait                 :: !CLLong
+    , cpuSwap                   :: !CLLong
+    , cpuNice                   :: !CLLong
+    , cpuTotal                  :: !CLLong
+    , cpuCtxSwitches            :: !CLLong
+    , cpuVoluntaryCtxSwitches   :: !CLLong
+    , cpuInvoluntaryCtxSwitches :: !CLLong
+    , cpuSyscalls               :: !CLLong
+    , cpuInterrupts             :: !CLLong
+    , cpuSoftInterrupts         :: !CLLong
+    , cpuSystime                :: !CTime
     }
 
 instance Copy CPU where
@@ -353,13 +353,13 @@ foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_cpu_stats :: CPUPtr -> IO Error
 
 data instance Struct CPUPercent = CCPUPercent
-    { cpuPctUser      :: {-# UNPACK #-} !CDouble
-    , cpuPctKernel    :: {-# UNPACK #-} !CDouble
-    , cpuPctIdle      :: {-# UNPACK #-} !CDouble
-    , cpuPctIOWait    :: {-# UNPACK #-} !CDouble
-    , cpuPctSwap      :: {-# UNPACK #-} !CDouble
-    , cpuPctNice      :: {-# UNPACK #-} !CDouble
-    , cpuPctTimeTaken :: {-# UNPACK #-} !CTime
+    { cpuPctUser      :: !CDouble
+    , cpuPctKernel    :: !CDouble
+    , cpuPctIdle      :: !CDouble
+    , cpuPctIOWait    :: !CDouble
+    , cpuPctSwap      :: !CDouble
+    , cpuPctNice      :: !CDouble
+    , cpuPctTimeTaken :: !CTime
     }
 
 instance Copy CPUPercent where
@@ -411,11 +411,11 @@ foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_cpu_percents :: CPUPercentPtr -> IO Error
 
 data instance Struct Memory = CMemory
-    { memTotal   :: {-# UNPACK #-} !CULLong
-    , memFree    :: {-# UNPACK #-} !CULLong
-    , memUsed    :: {-# UNPACK #-} !CULLong
-    , memCache   :: {-# UNPACK #-} !CULLong
-    , memSystime :: {-# UNPACK #-} !CTime
+    { memTotal   :: !CULLong
+    , memFree    :: !CULLong
+    , memUsed    :: !CULLong
+    , memCache   :: !CULLong
+    , memSystime :: !CTime
     }
 
 instance Copy Memory where
@@ -458,10 +458,10 @@ foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_mem_stats :: MemoryPtr -> IO Error
 
 data instance Struct Load = CLoad
-    { load1       :: {-# UNPACK #-} !CDouble
-    , load5       :: {-# UNPACK #-} !CDouble
-    , load15      :: {-# UNPACK #-} !CDouble
-    , loadSystime :: {-# UNPACK #-} !CTime
+    { load1       :: !CDouble
+    , load5       :: !CDouble
+    , load15      :: !CDouble
+    , loadSystime :: !CTime
     }
 
 instance Copy Load where
@@ -502,14 +502,14 @@ foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_load_stats :: LoadPtr -> IO Error
 
 data instance Struct User = CUser
-    { userLoginName    :: {-# UNPACK #-} !CString
-    , userRecordId     :: {-# UNPACK #-} !CString
-    , userRecordIdSize :: {-# UNPACK #-} !CSize
-    , userDevice       :: {-# UNPACK #-} !CString
-    , userHostName     :: {-# UNPACK #-} !CString
-    , userPid          :: {-# UNPACK #-} !CInt
-    , userLoginTime    :: {-# UNPACK #-} !CTime
-    , userSystime      :: {-# UNPACK #-} !CTime
+    { userLoginName    :: !CString
+    , userRecordId     :: !CString
+    , userRecordIdSize :: !CSize
+    , userDevice       :: !CString
+    , userHostName     :: !CString
+    , userPid          :: !CInt
+    , userLoginTime    :: !CTime
+    , userSystime      :: !CTime
     }
 
 instance Copy User where
@@ -562,10 +562,10 @@ foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_user_stats :: UserPtr -> IO Error
 
 data instance Struct Swap = CSwap
-    { swapTotal   :: {-# UNPACK #-} !CULLong
-    , swapUsed    :: {-# UNPACK #-} !CULLong
-    , swapFree    :: {-# UNPACK #-} !CULLong
-    , swapSystime :: {-# UNPACK #-} !CTime
+    { swapTotal   :: !CULLong
+    , swapUsed    :: !CULLong
+    , swapFree    :: !CULLong
+    , swapSystime :: !CTime
     }
 
 instance Copy Swap where
@@ -616,25 +616,25 @@ foreign import ccall safe "statgrab.h sg_free_stats_buf"
     }
 
 data instance Struct FileSystem = CFileSystem
-    { fsDeviceName  :: {-# UNPACK #-} !CString
-    , fsType        :: {-# UNPACK #-} !CString
-    , fsMountPoint  :: {-# UNPACK #-} !CString
-    , fsDeviceType  :: {-# UNPACK #-} !DeviceType
-    , fsSize        :: {-# UNPACK #-} !CULLong
-    , fsUsed        :: {-# UNPACK #-} !CULLong
-    , fsFree        :: {-# UNPACK #-} !CULLong
-    , fsAvail       :: {-# UNPACK #-} !CULLong
-    , fsTotalInodes :: {-# UNPACK #-} !CULLong
-    , fsUsedInodes  :: {-# UNPACK #-} !CULLong
-    , fsFreeInodes  :: {-# UNPACK #-} !CULLong
-    , fsAvailInodes :: {-# UNPACK #-} !CULLong
-    , fsIOSize      :: {-# UNPACK #-} !CULLong
-    , fsBlockSize   :: {-# UNPACK #-} !CULLong
-    , fsTotalBlocks :: {-# UNPACK #-} !CULLong
-    , fsFreeBlocks  :: {-# UNPACK #-} !CULLong
-    , fsUsedBlocks  :: {-# UNPACK #-} !CULLong
-    , fsAvailBlocks :: {-# UNPACK #-} !CULLong
-    , fsSystime     :: {-# UNPACK #-} !CTime
+    { fsDeviceName  :: !CString
+    , fsType        :: !CString
+    , fsMountPoint  :: !CString
+    , fsDeviceType  :: !DeviceType
+    , fsSize        :: !CULLong
+    , fsUsed        :: !CULLong
+    , fsFree        :: !CULLong
+    , fsAvail       :: !CULLong
+    , fsTotalInodes :: !CULLong
+    , fsUsedInodes  :: !CULLong
+    , fsFreeInodes  :: !CULLong
+    , fsAvailInodes :: !CULLong
+    , fsIOSize      :: !CULLong
+    , fsBlockSize   :: !CULLong
+    , fsTotalBlocks :: !CULLong
+    , fsFreeBlocks  :: !CULLong
+    , fsUsedBlocks  :: !CULLong
+    , fsAvailBlocks :: !CULLong
+    , fsSystime     :: !CTime
     }
 
 instance Copy FileSystem where
@@ -743,10 +743,10 @@ foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_fs_stats :: FileSystemPtr -> IO Error
 
 data instance Struct DiskIO = CDiskIO
-    { diskName    :: {-# UNPACK #-} !CString
-    , diskRead    :: {-# UNPACK #-} !CULLong
-    , diskWrite   :: {-# UNPACK #-} !CULLong
-    , diskSystime :: {-# UNPACK #-} !CTime
+    { diskName    :: !CString
+    , diskRead    :: !CULLong
+    , diskWrite   :: !CULLong
+    , diskSystime :: !CTime
     }
 
 instance Copy DiskIO where
@@ -802,15 +802,15 @@ foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_disk_io_stats :: DiskIOPtr -> IO Error
 
 data instance Struct NetworkIO = CNetworkIO
-    { ifaceIOName     :: {-# UNPACK #-} !CString
-    , ifaceTX         :: {-# UNPACK #-} !CULLong
-    , ifaceRX         :: {-# UNPACK #-} !CULLong
-    , ifaceIPackets   :: {-# UNPACK #-} !CULLong
-    , ifaceOPackets   :: {-# UNPACK #-} !CULLong
-    , ifaceIErrors    :: {-# UNPACK #-} !CULLong
-    , ifaceOErrors    :: {-# UNPACK #-} !CULLong
-    , ifaceCollisions :: {-# UNPACK #-} !CULLong
-    , ifaceSystem     :: {-# UNPACK #-} !CTime
+    { ifaceIOName     :: !CString
+    , ifaceTX         :: !CULLong
+    , ifaceRX         :: !CULLong
+    , ifaceIPackets   :: !CULLong
+    , ifaceOPackets   :: !CULLong
+    , ifaceIErrors    :: !CULLong
+    , ifaceOErrors    :: !CULLong
+    , ifaceCollisions :: !CULLong
+    , ifaceSystem     :: !CTime
     }
 
 instance Copy NetworkIO where
@@ -889,12 +889,12 @@ foreign import ccall safe "statgrab.h sg_free_stats_buf"
     }
 
 data instance Struct NetworkInterface = CNetworkInterface
-    { ifaceName    :: {-# UNPACK #-} !CString
-    , ifaceSpeed   :: {-# UNPACK #-} !CULLong
-    , ifaceFactor  :: {-# UNPACK #-} !CULLong
-    , ifaceDuplex  :: {-# UNPACK #-} !InterfaceMode
-    , ifaceUp      :: {-# UNPACK #-} !InterfaceStatus
-    , ifaceSystime :: {-# UNPACK #-} !CTime
+    { ifaceName    :: !CString
+    , ifaceSpeed   :: !CULLong
+    , ifaceFactor  :: !CULLong
+    , ifaceDuplex  :: !InterfaceMode
+    , ifaceUp      :: !InterfaceStatus
+    , ifaceSystime :: !CTime
     }
 
 instance Copy NetworkInterface where
@@ -944,9 +944,9 @@ foreign import ccall safe "statgrab.h sg_free_stats_buf"
     sg_free_network_iface_stats :: NetworkInterfacePtr -> IO Error
 
 data instance Struct Page = CPage
-    { pagesIn      :: {-# UNPACK #-} !CULLong
-    , pagesOut     :: {-# UNPACK #-} !CULLong
-    , pagesSysTime :: {-# UNPACK #-} !CTime
+    { pagesIn      :: !CULLong
+    , pagesOut     :: !CULLong
+    , pagesSysTime :: !CTime
     }
 
 instance Copy Page where
@@ -1001,27 +1001,27 @@ foreign import ccall safe "statgrab.h sg_free_stats_buf"
     }
 
 data instance Struct Process = CProcess
-    { procName        :: {-# UNPACK #-} !CString
-    , procTitle       :: {-# UNPACK #-} !CString
-    , procPid         :: {-# UNPACK #-} !CInt
-    , procParent      :: {-# UNPACK #-} !CInt
-    , procPGid        :: {-# UNPACK #-} !CInt
-    , procSessId      :: {-# UNPACK #-} !CInt
-    , procUid         :: {-# UNPACK #-} !CUInt
-    , procEUid        :: {-# UNPACK #-} !CUInt
-    , procGid         :: {-# UNPACK #-} !CUInt
-    , procEGid        :: {-# UNPACK #-} !CUInt
-    , procSwitches    :: {-# UNPACK #-} !CULLong
-    , procVoluntary   :: {-# UNPACK #-} !CULLong
-    , procInvoluntary :: {-# UNPACK #-} !CULLong
-    , procSize        :: {-# UNPACK #-} !CULLong
-    , procResident    :: {-# UNPACK #-} !CULLong
-    , procStart       :: {-# UNPACK #-} !CTime
-    , procSpent       :: {-# UNPACK #-} !CTime
-    , procCPUPercent  :: {-# UNPACK #-} !CDouble
-    , procNice        :: {-# UNPACK #-} !CInt
-    , procState       :: {-# UNPACK #-} !ProcessState
-    , procSystime     :: {-# UNPACK #-} !CTime
+    { procName        :: !CString
+    , procTitle       :: !CString
+    , procPid         :: !CInt
+    , procParent      :: !CInt
+    , procPGid        :: !CInt
+    , procSessId      :: !CInt
+    , procUid         :: !CUInt
+    , procEUid        :: !CUInt
+    , procGid         :: !CUInt
+    , procEGid        :: !CUInt
+    , procSwitches    :: !CULLong
+    , procVoluntary   :: !CULLong
+    , procInvoluntary :: !CULLong
+    , procSize        :: !CULLong
+    , procResident    :: !CULLong
+    , procStart       :: !CTime
+    , procSpent       :: !CTime
+    , procCPUPercent  :: !CDouble
+    , procNice        :: !CInt
+    , procState       :: !ProcessState
+    , procSystime     :: !CTime
     }
 
 instance Copy Process where
@@ -1142,13 +1142,13 @@ foreign import ccall safe "statgrab.h sg_free_stats_buf"
     }
 
 data instance Struct ProcessCount = CProcessCount
-    { countTotal    :: {-# UNPACK #-} !CULLong
-    , countRunning  :: {-# UNPACK #-} !CULLong
-    , countSleeping :: {-# UNPACK #-} !CULLong
-    , countStopped  :: {-# UNPACK #-} !CULLong
-    , countZombie   :: {-# UNPACK #-} !CULLong
-    , countUnknown  :: {-# UNPACK #-} !CULLong
-    , countSystime  :: {-# UNPACK #-} !CTime
+    { countTotal    :: !CULLong
+    , countRunning  :: !CULLong
+    , countSleeping :: !CULLong
+    , countStopped  :: !CULLong
+    , countZombie   :: !CULLong
+    , countUnknown  :: !CULLong
+    , countSystime  :: !CTime
     }
 
 instance Copy ProcessCount where
