@@ -41,7 +41,7 @@ class Copy a where
     copy      :: PtrN (Struct a) -> IO a
 
     copy      PtrN{..} = copyAt ptrUnwrap 0
-    copyBatch PtrN{..} = mapM (\i -> copyAt ptrUnwrap i) entries
+    copyBatch PtrN{..} = mapM (copyAt ptrUnwrap) entries
       where
         entries
             | ptrEntries > 1 = [0..ptrEntries - 1]
