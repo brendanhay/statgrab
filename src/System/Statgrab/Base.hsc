@@ -30,8 +30,8 @@ data family Struct a
 -- | A wrapper around @Ptr a@ which keeps track of the result @Entries@,
 -- needed for 'copyBatch'.
 data PtrN a = PtrN
-    { ptrEntries :: !Int
-    , ptrUnwrap  :: Ptr a
+    { ptrUnwrap  :: Ptr a
+    , ptrEntries :: !Int
     }
 
 -- | Copy routines to marshall and unmarshall Storable @Stat a@ structures.
@@ -59,7 +59,7 @@ class Stat a where
 -- | A wrapper for 'acquire'. This allows tracking the number of @Entries@
 -- contained in a @Ptr a@.
 acquireN :: Stat a => IO (PtrN a)
-acquireN = alloca $ \x -> PtrN <$> (fromIntegral <$> peek x) <*> acquire x
+acquireN = alloca $ \x -> PtrN <$> acquire x <*> (fromIntegral <$> peek x)
 {-# INLINE acquireN #-}
 
 releaseN :: Stat a => PtrN a -> IO Error
